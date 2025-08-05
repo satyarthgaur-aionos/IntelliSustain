@@ -1,0 +1,393 @@
+===============================================================================
+                    INFERRIX AI AGENT - RAILWAY DEPLOYMENT GUIDE
+===============================================================================
+
+This guide will help you deploy the complete Inferrix AI Agent application
+(Frontend, Backend, and Database) to Railway's free tier for demo purposes.
+
+===============================================================================
+                                PREREQUISITES
+===============================================================================
+
+1. GitHub Account (free)
+2. Railway Account (free tier available)
+3. OpenAI API Key (for AI functionality)
+4. Inferrix API Token (for device data)
+5. Git installed on your local machine
+
+===============================================================================
+                                STEP 1: PREPARE YOUR CODE
+===============================================================================
+
+1.1. Create a GitHub Repository
+   - Go to GitHub.com and create a new repository
+   - Name it: "inferrix-ai-agent-demo"
+   - Make it public (for free Railway deployment)
+   - Clone it to your local machine
+
+1.2. Upload Your Code
+   - Copy all your project files to the repository
+   - Ensure the structure is:
+     ```
+     inferrix-ai-agent-demo/
+     ├── backend/
+     ├── frontend/
+     ├── docs/
+     ├── README.md
+     └── .gitignore
+     ```
+
+1.3. Create .gitignore file
+   Create a .gitignore file in the root directory:
+   ```
+   # Environment variables
+   .env
+   .env.local
+   .env.production
+   
+   # Python
+   __pycache__/
+   *.py[cod]
+   *$py.class
+   venv/
+   .venv/
+   
+   # Node.js
+   node_modules/
+   npm-debug.log*
+   yarn-debug.log*
+   yarn-error.log*
+   
+   # Build outputs
+   dist/
+   build/
+   
+   # IDE
+   .vscode/
+   .idea/
+   
+   # OS
+   .DS_Store
+   Thumbs.db
+   ```
+
+1.4. Commit and Push
+   ```bash
+   git add .
+   git commit -m "Initial commit - Inferrix AI Agent"
+   git push origin main
+   ```
+
+===============================================================================
+                                STEP 2: SETUP RAILWAY
+===============================================================================
+
+2.1. Create Railway Account
+   - Go to https://railway.app/
+   - Sign up with your GitHub account
+   - Verify your email address
+
+2.2. Create New Project
+   - Click "New Project"
+   - Select "Deploy from GitHub repo"
+   - Choose your "inferrix-ai-agent-demo" repository
+   - Railway will automatically detect your project structure
+
+===============================================================================
+                                STEP 3: DEPLOY DATABASE
+===============================================================================
+
+3.1. Add PostgreSQL Service
+   - In your Railway project, click "New Service"
+   - Select "Database" → "PostgreSQL"
+   - Railway will create a PostgreSQL database
+   - Note down the database credentials (you'll need them later)
+
+3.2. Get Database Connection Details
+   - Click on the PostgreSQL service
+   - Go to "Connect" tab
+   - Copy the following details:
+     * Database URL
+     * Database Name
+     * Username
+     * Password
+     * Host
+     * Port
+
+3.3. Initialize Database Schema
+   - Go to "Variables" tab in PostgreSQL service
+   - Add the following environment variables:
+     ```
+     DATABASE_URL=postgresql://username:password@host:port/database_name
+     ```
+   - Replace with your actual database credentials
+
+===============================================================================
+                                STEP 4: DEPLOY BACKEND
+===============================================================================
+
+4.1. Create Backend Service
+   - In your Railway project, click "New Service"
+   - Select "GitHub Repo"
+   - Choose your repository
+   - Set the source directory to: "backend"
+
+4.2. Configure Backend Environment Variables
+   - Click on your backend service
+   - Go to "Variables" tab
+   - Add the following environment variables:
+
+   ```
+   # Database
+   DATABASE_URL=postgresql://username:password@host:port/database_name
+   
+   # OpenAI API (Required for AI functionality)
+   OPENAI_API_KEY=your_openai_api_key_here
+   
+   # Inferrix API (Required for device data)
+   INFERRIX_API_TOKEN=your_inferrix_api_token_here
+   
+   # JWT Secret (Generate a secure random string)
+   JWT_SECRET_KEY=your_secure_jwt_secret_here
+   
+   # CORS Settings
+   CORS_ORIGINS=https://your-frontend-domain.railway.app
+   
+   # Port (Railway will set this automatically)
+   PORT=8000
+   ```
+
+4.3. Configure Backend Build Settings
+   - Go to "Settings" tab in backend service
+   - Set the following:
+     * Build Command: `pip install -r requirements.txt`
+     * Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+     * Health Check Path: `/health`
+
+4.4. Deploy Backend
+   - Railway will automatically deploy your backend
+   - Wait for the build to complete
+   - Note down the backend URL (e.g., https://your-backend.railway.app)
+
+===============================================================================
+                                STEP 5: DEPLOY FRONTEND
+===============================================================================
+
+5.1. Create Frontend Service
+   - In your Railway project, click "New Service"
+   - Select "GitHub Repo"
+   - Choose your repository
+   - Set the source directory to: "frontend"
+
+5.2. Configure Frontend Environment Variables
+   - Click on your frontend service
+   - Go to "Variables" tab
+   - Add the following environment variables:
+
+   ```
+   # Backend API URL
+   VITE_API_URL=https://your-backend.railway.app
+   
+   # Environment
+   NODE_ENV=production
+   ```
+
+5.3. Configure Frontend Build Settings
+   - Go to "Settings" tab in frontend service
+   - Set the following:
+     * Build Command: `npm install && npm run build`
+     * Start Command: `npm run preview -- --host 0.0.0.0 --port $PORT`
+     * Output Directory: `dist`
+
+5.4. Deploy Frontend
+   - Railway will automatically deploy your frontend
+   - Wait for the build to complete
+   - Note down the frontend URL (e.g., https://your-frontend.railway.app)
+
+===============================================================================
+                                STEP 6: CONFIGURE CORS
+===============================================================================
+
+6.1. Update Backend CORS Settings
+   - Go back to your backend service
+   - Update the CORS_ORIGINS variable:
+   ```
+   CORS_ORIGINS=https://your-frontend.railway.app
+   ```
+   - Redeploy the backend service
+
+6.2. Update Frontend API URL
+   - Go back to your frontend service
+   - Update the VITE_API_URL variable:
+   ```
+   VITE_API_URL=https://your-backend.railway.app
+   ```
+   - Redeploy the frontend service
+
+===============================================================================
+                                STEP 7: TEST DEPLOYMENT
+===============================================================================
+
+7.1. Test Backend Health
+   - Visit: https://your-backend.railway.app/health
+   - Should return: {"status": "✅ Connected to Inferrix API via MCP", ...}
+
+7.2. Test Frontend
+   - Visit: https://your-frontend.railway.app
+   - Should show the login page
+   - Use test credentials: tech@inferrix.com / password123
+
+7.3. Test AI Functionality
+   - Login to the application
+   - Try some test queries:
+     * "Show all devices"
+     * "Turn off HVAC in east wing"
+     * "Check system health"
+
+===============================================================================
+                                STEP 8: MONITORING & MAINTENANCE
+===============================================================================
+
+8.1. Railway Dashboard
+   - Monitor your services in Railway dashboard
+   - Check logs for any errors
+   - Monitor resource usage
+
+8.2. Environment Variables
+   - Keep your API keys secure
+   - Update CORS settings if you change domains
+   - Rotate JWT secrets periodically
+
+8.3. Database Management
+   - Railway provides automatic backups
+   - Monitor database size (free tier limits)
+   - Consider upgrading if you exceed limits
+
+===============================================================================
+                                TROUBLESHOOTING
+===============================================================================
+
+Common Issues and Solutions:
+
+1. Build Failures
+   - Check build logs in Railway dashboard
+   - Ensure all dependencies are in requirements.txt
+   - Verify environment variables are set correctly
+
+2. CORS Errors
+   - Update CORS_ORIGINS with correct frontend URL
+   - Ensure URLs match exactly (including https://)
+
+3. Database Connection Issues
+   - Verify DATABASE_URL format
+   - Check if database service is running
+   - Ensure database credentials are correct
+
+4. API Key Issues
+   - Verify OpenAI API key is valid
+   - Check Inferrix API token is working
+   - Test API keys locally first
+
+5. Frontend Not Loading
+   - Check if backend is accessible
+   - Verify VITE_API_URL is correct
+   - Check browser console for errors
+
+===============================================================================
+                                FREE TIER LIMITS
+===============================================================================
+
+Railway Free Tier Limitations:
+- 500 hours per month
+- 512MB RAM per service
+- 1GB storage
+- Shared CPU resources
+- Automatic sleep after inactivity
+
+Recommendations:
+- Use for demos and testing only
+- Consider upgrading for production use
+- Monitor usage in Railway dashboard
+- Implement proper error handling
+
+===============================================================================
+                                SECURITY CONSIDERATIONS
+===============================================================================
+
+1. Environment Variables
+   - Never commit API keys to Git
+   - Use Railway's environment variable system
+   - Rotate keys regularly
+
+2. CORS Configuration
+   - Only allow necessary origins
+   - Use HTTPS in production
+   - Validate all inputs
+
+3. Database Security
+   - Use strong passwords
+   - Enable SSL connections
+   - Regular backups
+
+4. API Security
+   - Implement rate limiting
+   - Validate all requests
+   - Monitor for abuse
+
+===============================================================================
+                                DEMO PREPARATION
+===============================================================================
+
+1. Pre-demo Checklist:
+   - [ ] All services are running
+   - [ ] Database is accessible
+   - [ ] API keys are working
+   - [ ] Frontend loads correctly
+   - [ ] Login works with test credentials
+   - [ ] AI queries return responses
+
+2. Demo Script:
+   - Start with login (tech@inferrix.com / password123)
+   - Show device list and selection
+   - Demonstrate AI queries
+   - Show real-time responses
+   - Highlight agentic AI capabilities
+
+3. Backup Plan:
+   - Have local development environment ready
+   - Keep API keys accessible
+   - Prepare screenshots/videos as backup
+
+===============================================================================
+                                SUPPORT & RESOURCES
+===============================================================================
+
+Railway Documentation:
+- https://docs.railway.app/
+- https://railway.app/docs/deploy/deployments
+
+Project Documentation:
+- README.md in your repository
+- API documentation at /docs endpoint
+- Test scripts in backend/ directory
+
+Contact Information:
+- Railway Support: support@railway.app
+- GitHub Issues: Create issues in your repository
+
+===============================================================================
+
+Congratulations! Your Inferrix AI Agent is now deployed on Railway's free tier
+and ready for demos. The system includes:
+
+✅ Frontend (React) - User interface
+✅ Backend (FastAPI) - API and AI logic  
+✅ Database (PostgreSQL) - User management
+✅ Agentic AI - GPT-4o powered intelligence
+✅ Real-time Integration - Inferrix APIs
+✅ Security - JWT, CORS, rate limiting
+
+Your demo URL: https://your-frontend.railway.app
+Your API URL: https://your-backend.railway.app
+
+=============================================================================== 

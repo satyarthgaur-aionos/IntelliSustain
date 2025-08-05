@@ -1,0 +1,33 @@
+(b) Create and activate virtual environment:
+
+bash
+Copy
+Edit
+cd backend
+python -m venv venv
+source venv/bin/activate  # or venv\\Scripts\\activate or venv\Scripts\activate(Windows)
+(c) Install requirements:
+
+bash
+Copy
+Edit
+pip install -r requirements.txt
+(d) Run FastAPI server:
+
+bash
+Copy
+Edit
+uvicorn main:app --reload
+🟢 Server will start at: http://localhost:8000
+
+✅ 4. Setup Frontend (React + Tailwind UI)
+(a) Install and run frontend:
+
+bash
+Copy
+Edit
+cd frontend
+npm install
+npm run dev
+🟢 Frontend runs at: http://localhost:5173
+

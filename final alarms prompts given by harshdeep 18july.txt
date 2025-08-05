@@ -1,0 +1,64 @@
+show me active alarms
+
+
+filter choke
+co2
+
+
+what is filter status of vfd
+
+get alarm - give statis suggestions
+
+show me ares with high co2 levels -- show high c02 alarms750 700 pm  --banquet hall has poor ventilation or over-occupancy
+
+
+
+wireless sensor --sends data to gateway (adator)
+
+gatwway sends data to cloud server via mqtt
+
+
+if no power at site or internet down then gateway fail to send data to cloud
+
+
+show me history of data disconnections
+show me connection fail-- "data not updating in bms" alarms(inc cleared alarms)
+
+if "history" or "old" or phrases like "last 1 week" or "last 1 month" --then we need to show "cleared" alarms also otherwise we show only active alarms
+
+
+show me alarms related to chiller or hvac :search "high chilled water supply temmperature" /"low chilled water supply temperature" alarms
+
+
+
+
+show me alarms related to system cimunication - 
+system connecting status
+show health
+
+
+show me status of pumps
+
+
+show me alarms related to air quality/show me areas with bad air quality/what is air quality  - AQI alarms,pm10,pm 2.5,CO2,battery alarms will be displayed if they exist
+
+show me battery status of all devices
+show me any devices with low battery -- display "battery" type alarms and fetch
+show me battery status for whole system 
+show me alarms wuth low battery
+
+
+
+chiller-hvac --cools water--supplies it to fcu --
+
+ahu-air handling unit
+
+
+
+
+
+
+
+ 
+
+

@@ -1,0 +1,479 @@
+OpenAI:   satyarth.gaur@aionos.ai    Satyarth1982#
+tech@intellisustain.com
+Demo@1234
+
+Email: admin@inferrix.com
+Password: admin@2025
+
+jwt token expiry 9000 seconds=150 mins
+
+refresh token expiry 604800 seconds
+
+/api/user/devices
+https://cloud.inferrix.com/api/user/devices?page=0&pageSize=10
+
+or 
+  https://cloud.inferrix.com/api/deviceInfos/all?page=0&pageSize=100
+
+/api/plugins/telemetry/{entityType}/{entityId}/values/attributes{?keys}  where  keys = "location", entityType="DEVICE"
+
+
+/api/alarm/{entityType}/{entityId} :Get Alarms (getAlarms) 
+
+
+https://cloud.inferrix.com/api/plugins/telemetry/DEVICE/a1f77c50-4c24-11f0-816d-85352a7c91ff/keys/timeseries
+[
+  "setFanSpeed",
+  "setFsanSpeed",
+  "temperature",
+  "heartbeat",
+  "mode status",
+  "device monitor",
+  "set fan speed",
+  "fan speed status",
+  "room temperature setpoint",
+  "room temperature",
+  "thermostat status"
+]
+
+
+{
+"set fan speed": 0   //0 for low  1 for medium and 2 for high
+}
+
+
+-------------------------
+
+
+/api/plugins/telemetry/{entityType}/{entityId}/keys/attributes :Get all attribute keys (getAttributeKeys):device location !!!
+
+/api/plugins/telemetry/{entityType}/{entityId}/values/attributes{?keys}
+
+You can use the following API to write data into a device point, for example, to set the "fan speed status" to 0:
+
+`/api/plugins/telemetry/{entityType}/{entityId}/timeseries/{scope}` - Save or update time series data (saveEntityTelemetry)
+
+Available metrics: heartbeat, mode status, device monitor, set fan speed, fan speed status, room temperature setpoint, room temperature, thermostat status.
+
+???temperature of device is not same as room temperature !!!!
+
+Set the fan speed status to 0 for 2nd floor Room 34
+
+"Show temperature in Second Floor Room No. 50"
+"Give temperature of third floor Room50"
+"Temperature in 2F Room 43"
+"Temperature in 3F Room 50"
+
+Give temperature of third floor Room50"
+"Show temperature in 3F Room49"
+"Temperature in 3F Room51"
+"Temperature in 2F Room50"
+
+Show temperature in Second Floor Room No. 50
+
+Give temperature of 2F-Room50-Thermostat”
+
+Show humidity in Room 33
+
+Show battery for all thermostats”
+
+Show temperature in InferrixGreenTech office
+
+Turn off fan in Room 201
+
+Set temperature in room 201 to 26 degrees
+
+Set the temperature in Banquet Hall 1 to 24
+
+fan speed,mode ,set point temperature -----real attribute
+
+
+for today demo:
+"Give heartbeat of 2F-Room50-Thermostat" 
+"Show battery for all thermostats" 
+"Give temperature of 2F-Room50-Thermostat" 
+
+------------
+[
+  "heartbeat",
+  "mode status",
+  "device monitor",
+  "set fan speed",
+  "fan speed status",
+  "room temperature setpoint",
+  "room temperature",
+  "thermostat status"
+]
+---------------
+
+Your AI agent should not assume only "DEVICE"—it should dynamically use the entityType from the API data.
+This makes your system robust and future-proof for all Inferrix entity types.
+If you want, I can help you review or update your backend logic to ensure it dynamically handles all entityType values for any user prompt.
+
+
+Summary of Backend Flow
+Extract device type, action, and location from the user prompt.
+Fetch all devices and their attributes.
+Match the device type and location to find the correct device.
+Send the telemetry update (or fetch status) using the correct API endpoint and headers.
+
+Fetch all entities (devices, assets, thermostats, etc.) relevant to the user’s prompt.
+For each entity, check:
+entityType (e.g., "DEVICE", "ASSET", "Thermostat")
+name, type, location, and other attributes
+Match the user’s intent (e.g., “fan”, “thermostat”, “office device”, “asset”) and location to the correct entity.
+Use the correct entityType and entityId in your API call.
+
+-----------
+# Inferrix AI Agent Demo Prompts - Complete BMS Persona Coverage
+
+## 🏢 **FACILITY MANAGER** - Environmental Monitoring & Control
+
+### Real-Time Environmental Monitoring
+1. What is the current temperature and occupancy in zone 4?
+2. Show me the temperature and humidity in the east wing.
+3. What's the environmental status in Conference Room B?
+4. Check temperature and occupancy in the main lobby.
+5. Monitor environmental conditions in the north wing.
+6. Show me real-time data for the west wing.
+
+### Zone-Based Queries
+7. What's the temperature in the 3rd floor?
+8. Check occupancy levels in Tower A.
+9. Show environmental data for the executive floor.
+10. Monitor conditions in the parking garage.
+11. What's the status in the server room?
+
+### Device-Specific Monitoring
+12. Show temperature for IAQ Sensor V2 - 300186.
+13. Check humidity for RH/T Sensor - 150002.
+14. Show telemetry for device 2F-Room33-Thermostat.
+15. What's the battery level of device 300186?
+16. Check device health for IAQ Sensor V2 - 300186.
+
+---
+
+## ⚡ **ENERGY MANAGER** - Energy Optimization & Sustainability
+
+### Energy Optimization Control
+17. Turn off HVAC and dim lights in the east wing on Saturday and Sunday.
+18. Optimize energy usage in the west wing for the weekend.
+19. Reduce lighting in conference rooms after hours.
+20. Optimize energy in guest rooms during low occupancy.
+21. Control HVAC in the main hall for energy efficiency.
+22. Manage lighting in Tower A for energy savings.
+
+### Energy Analytics & Reporting
+23. How much carbon emissions did we reduce this week?
+24. Show me the sustainability metrics for this month.
+25. What's our ESG performance for the quarter?
+26. Are we on track for our Q3 sustainability target?
+27. Show energy consumption patterns for this week.
+28. Generate energy efficiency report for this month.
+
+### System Control
+29. Turn on HVAC in the east wing with optimized settings.
+30. Dim lights in the west wing after hours.
+31. Optimize energy in the main lobby.
+32. Control lighting in conference rooms.
+33. Manage HVAC in Tower A for efficiency.
+
+---
+
+## 🔧 **MAINTENANCE TECHNICIAN** - Predictive Maintenance & Alarms
+
+### Predictive Maintenance Analysis
+34. Are any HVAC or lighting systems likely to fail in the next 7 days?
+35. Check system health ahead of the high-profile visit.
+36. What maintenance is needed for the chiller systems?
+37. Predict maintenance needs for HVAC systems.
+38. Check health of lighting systems.
+39. Analyze maintenance requirements for the next quarter.
+
+### Alarm Management
+40. Show all active alarms.
+41. Show all critical alarms.
+42. Show all major alarms.
+43. Show all minor alarms.
+44. Show all alarms for IAQ Sensor V2 - 300186.
+45. Show all alarms for RH/T Sensor - 150002.
+46. Show all alarms for today.
+47. Show all alarms in the last 24 hours.
+48. What is the highest severity alarm right now?
+49. Summarize alarms for today.
+50. How many alarms are currently active?
+51. Show all unacknowledged alarms.
+
+### Device Health & Diagnostics
+52. Check health of IAQ Sensor V2 - 300186.
+53. Is IAQ Sensor V2 - 300186 sending telemetry?
+54. Check device status for all devices.
+55. Show device health for RH/T Sensor - 150002.
+56. Diagnose issues with device 300186.
+57. Check if device 150002 is online.
+
+### Alarm Actions
+58. Acknowledge alarm 300186.
+59. Acknowledge the high temperature alarm for IAQ Sensor V2 - 300186.
+60. Acknowledge the critical alarm for RH/T Sensor - 150002.
+
+### Overheat Risk Prediction
+61. Forecast shows extreme heat; check HVAC-01 for potential overheat.
+62. Predict overheat risk for device 300186.
+63. Check overheat risk for chiller systems.
+64. Analyze temperature trends for predictive maintenance.
+
+---
+
+## 🔒 **SECURITY OFFICER** - Security Monitoring & Access Control
+
+### Security Monitoring
+65. Monitor security systems for unauthorized access in the main entrance.
+66. Check for security breaches in the server room today.
+67. Monitor security in the parking garage.
+68. Check for suspicious activity in the executive floor.
+69. Monitor access patterns in the main lobby.
+70. Check security status for the entire building.
+
+### Access Control Management
+71. Grant access to the executive floor for user ID 12345.
+72. Revoke access from the parking garage for user ID 67890.
+73. Check access status for the server room.
+74. Update permissions for user ID 54321.
+75. Grant access to the server room for maintenance staff.
+76. Check access logs for the main entrance.
+
+### Security Analytics
+77. Show security events for the last hour.
+78. Monitor unauthorized access attempts.
+79. Check security system status.
+80. Analyze access patterns for anomalies.
+
+---
+
+## 📊 **OPERATIONS MANAGER** - Analytics & Performance Management
+
+### Operational Analytics
+81. Show me comprehensive operational analytics for this month.
+82. Generate trend analysis for energy consumption over the next quarter.
+83. Compare our performance against hospitality industry benchmarks.
+84. Analyze maintenance efficiency trends for the last quarter.
+85. Provide occupancy pattern analytics for weekly reporting.
+86. Benchmark our energy efficiency against office sector standards.
+
+### Performance Benchmarking
+87. Compare our energy efficiency with healthcare sector.
+88. Benchmark maintenance efficiency against retail industry.
+89. Analyze occupant satisfaction metrics.
+90. Compare operational costs with industry standards.
+91. Benchmark system uptime against hospitality sector.
+
+### Trend Analysis & Forecasting
+92. Generate trend analysis for energy consumption.
+93. Forecast maintenance costs for next quarter.
+94. Analyze occupancy patterns for trend prediction.
+95. Predict comfort scores for next month.
+96. Show trend analysis for system performance.
+
+### KPI Tracking
+97. Track key performance indicators for this month.
+98. Show operational efficiency metrics.
+99. Monitor business intelligence data.
+100. Track performance against targets.
+
+### Asset & Entity Management
+101. List all assets in the system.
+102. Show all entity views.
+103. Display asset information.
+104. Show entity view details.
+105. List available assets.
+
+### Notification Management
+106. Show my notifications.
+107. Display notification inbox.
+108. List all alerts.
+109. Show notification details.
+110. Check my alerts.
+
+---
+
+## 👤 **OCCUPANT/END USER** - Comfort & Personalization
+
+### Comfort Adjustment Control
+111. Lower the temperature by 2 degrees in Conference Room B for the next 3 hours.
+112. Adjust comfort settings in the main hall for the townhall event.
+113. Increase temperature in the north wing by 1 degree.
+114. Adjust humidity in my workspace.
+115. Control temperature in Room 101.
+116. Optimize comfort in the main lobby.
+
+### Personalized Settings
+117. Adjust temperature for my workspace.
+118. Set comfort preferences for Room 205.
+119. Control environmental settings in my area.
+120. Optimize comfort for guest experience.
+121. Personalize settings for Room 312.
+
+### Environmental Control
+122. Control HVAC settings in my workspace.
+123. Adjust lighting for comfort.
+124. Optimize air quality in my area.
+125. Control temperature and humidity.
+126. Adjust environmental settings.
+
+---
+
+## 🏨 **HOTEL-SPECIFIC SCENARIOS**
+
+### Hotel Room Comfort Control
+127. Increase temperature by 2 degrees in room 101 for the next 3 hours.
+128. Adjust comfort settings for deluxe suite guests.
+129. Control humidity in room 205.
+130. Optimize room temperature for guest comfort.
+131. Set comfort settings for room 312.
+
+### Hotel Energy Optimization
+132. Optimize energy usage in guest rooms during low occupancy.
+133. Control HVAC in common areas for efficiency.
+134. Manage lighting in hotel corridors.
+135. Optimize energy for hotel operations.
+136. Control systems in hotel lobby.
+
+### Hotel Maintenance Scheduling
+137. Schedule preventive maintenance for elevator equipment on floor 3.
+138. Check maintenance needs for hotel HVAC systems.
+139. Schedule maintenance for hotel lighting systems.
+140. Plan maintenance for hotel security systems.
+
+### Hotel Guest Experience
+141. Optimize room comfort for guest 12345.
+142. Personalize settings for guest ABC123.
+143. Enhance guest experience through environmental control.
+144. Optimize comfort for VIP guests.
+
+### Hotel Operational Analytics
+145. Analyze hotel occupancy patterns.
+146. Show hotel energy consumption analytics.
+147. Track hotel maintenance efficiency.
+148. Monitor hotel guest satisfaction metrics.
+
+---
+
+## 🔍 **ROOT CAUSE ANALYSIS & TROUBLESHOOTING**
+
+### Environmental Issues
+149. Why is the east wing warm and noisy today?
+150. What's causing the environmental discomfort in the south wing?
+151. Why is the temperature fluctuating in the main lobby?
+152. What's causing the humidity issues in Conference Room B?
+153. Why is the air quality poor in the north wing?
+
+### Device Issues
+154. My device is not sending telemetry.
+155. Why is device X not sending data?
+156. Show events for device RH/T Sensor - 150002.
+157. Diagnose issues with IAQ Sensor V2 - 300186.
+158. Why is device 300186 offline?
+
+### System Issues
+159. What's causing the system performance issues?
+160. Why are there so many alarms today?
+161. What's causing the energy consumption spike?
+162. Why is the comfort level poor in multiple areas?
+
+---
+
+## 🧹 **CLEANING OPTIMIZATION**
+
+### Usage Pattern Analysis
+163. What are the least used restrooms on the 3rd floor today?
+164. Show me restroom usage patterns for cleaning optimization.
+165. Which areas need cleaning schedule adjustments?
+166. Analyze usage patterns for facility management.
+167. Show cleaning optimization data for the 3rd floor.
+
+### Facility Management
+168. Optimize cleaning schedules for restrooms.
+169. Analyze usage patterns for conference rooms.
+170. Show facility usage analytics.
+171. Optimize maintenance schedules based on usage.
+
+---
+
+## 📱 **DEVICE MANAGEMENT & TELEMETRY**
+
+### Device Inventory
+172. List all devices.
+173. Show all device names.
+174. How many devices are online?
+175. Show device status for all devices.
+176. List devices with low battery.
+177. Show device inventory.
+
+### Device Telemetry
+178. Show temperature for IAQ Sensor V2 - 300186.
+179. Show latest telemetry for RH/T Sensor - 150002.
+180. Show sensor telemetry for IAQ Sensor V2 - 300186 for the last 24 hours.
+181. Show humidity for RH/T Sensor - 150002.
+182. Show battery level for device 300186.
+183. Show occupancy data for device 150002.
+
+### Device Attributes
+184. Show attributes for device 150002.
+185. Show device capabilities for IAQ Sensor V2 - 300186.
+186. List available telemetry types for device 300186.
+187. Show device properties for RH/T Sensor - 150002.
+
+---
+
+## 🎯 **ADVANCED QUERIES**
+
+### Multi-System Queries
+188. Turn off HVAC and dim lights in the east wing on Saturday and Sunday. Send me a report Monday.
+189. Check system health and optimize energy usage for the weekend.
+190. Monitor security, comfort, and energy systems simultaneously.
+
+### Complex Scenarios
+191. The CEO is visiting tomorrow. Check all systems and optimize comfort and security.
+192. We have a major event this weekend. Ensure all systems are optimized.
+193. There's a heat wave coming. Prepare all systems for high temperatures.
+
+### Reporting & Analytics
+194. Generate a comprehensive report for all systems.
+195. Show me a dashboard of all key metrics.
+196. Create a summary of today's system performance.
+197. Generate a weekly operations report.
+
+---
+
+## 🔧 **TROUBLESHOOTING & SUPPORT**
+
+### Error Resolution
+198. I'm getting an error with device 300186.
+199. The system is not responding properly.
+200. There's an issue with the temperature control.
+201. The alarms are not working correctly.
+
+### System Status
+202. What's the overall system status?
+203. Are all systems functioning properly?
+204. Show me any system issues.
+205. What needs attention right now?
+
+---
+
+## 📋 **QUICK REFERENCE**
+
+### Most Common Queries
+206. Show all active alarms
+207. Check device status
+208. Show temperature for device
+209. Optimize energy usage
+210. Adjust comfort settings
+
+### Emergency Queries
+211. Show critical alarms
+212. Check system health
+213. Monitor security
+214. Emergency system control
+215. Immediate maintenance needs 

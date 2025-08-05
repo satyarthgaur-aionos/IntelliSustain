@@ -1,0 +1,27 @@
+# Cloudflare Tunnel Configuration for Inferrix AI Agent Demo
+# Save this as cloudflare-tunnels.yml
+
+tunnel: inferrix-ai-demo
+credentials-file: ./tunnel-credentials.json
+
+ingress:
+  # Frontend (Vite)
+  - hostname: inferrix-frontend.your-domain.com
+    service: http://localhost:5173
+    originRequest:
+      noTLSVerify: true
+
+  # Backend API (FastAPI)
+  - hostname: inferrix-api.your-domain.com
+    service: http://localhost:8000
+    originRequest:
+      noTLSVerify: true
+
+  # MCP Server
+  - hostname: inferrix-mcp.your-domain.com
+    service: http://localhost:8001
+    originRequest:
+      noTLSVerify: true
+
+  # Catch-all rule (optional)
+  - service: http_status:404 

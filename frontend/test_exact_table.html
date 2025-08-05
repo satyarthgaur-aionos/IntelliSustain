@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exact Table Format Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-case { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+        .table { 
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: white;
+        }
+        table { 
+            min-width: 100%;
+            border-collapse: collapse;
+        }
+        th { 
+            background: #f3f4f6;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 800;
+            font-size: 12px;
+            color: #111827;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid #9ca3af;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        td { 
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+        tr:hover { background: #f9fafb; }
+        .critical { background: #dc2626; color: white; font-weight: 600; border-radius: 6px; }
+        .active { background: #dcfce7; color: #166534; font-weight: 500; border-radius: 6px; }
+        .empty { color: #9ca3af; font-style: italic; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Exact Table Format Test</h1>
+    
+    <div class="test-case">
+        <h3>Test Case: User's Exact Response</h3>
+        <div id="table1"></div>
+    </div>
+
+    <script>
+        // Exact table data from user's response
+        const exactTable = `🔴 Critical Alarms:
+
+| Time | Device Name | Location | Type | Severity | Status |
+| --- | --- | --- | --- | --- | --- |
+| 2025-06-13 19:24 | RH/T Sensor - 150002 | - | Sensors Status Alert | CRITICAL | ACTIVE_UNACK |
+| 2025-05-16 15:02 | Distance Sensor - 112001 | - | Sensors Status Alert | CRITICAL | ACTIVE_UNACK |
+| 2025-04-28 00:25 | Lighting Controller V4 - 1040 | - | Sensors Status Alert | CRITICAL | ACTIVE_UNACK |`;
+
+        // Table detection function (same as in Chat.jsx)
+        function isMarkdownTable(text) {
+            const lines = text.trim().split('\n');
+            if (lines.length < 3) return false;
+            
+            if (!lines[0].startsWith('|')) return false;
+            
+            const secondLine = lines[1];
+            if (!secondLine.includes('---')) return false;
+            
+            if (lines.length < 3) return false;
+            
+            const dataLines = lines.slice(2);
+            const hasDataRows = dataLines.some(line => 
+                line.trim().startsWith('|') && 
+                line.split('|').some(cell => cell.trim().length > 0)
+            );
+            
+            console.log('Table detection:', {
+                text: text.substring(0, 200) + '...',
+                linesCount: lines.length,
+                firstLineStartsWithPipe: lines[0].startsWith('|'),
+                secondLineHasSeparator: secondLine.includes('---'),
+                hasDataRows,
+                dataLines: dataLines.slice(0, 2),
+                firstLine: lines[0],
+                secondLine: lines[1],
+                thirdLine: lines[2] || 'N/A'
+            });
+            
+            return hasDataRows;
+        }
+
+        // Table rendering function (same as in Chat.jsx)
+        function renderMarkdownTable(markdown) {
+            const lines = markdown.trim().split('\n');
+            
+            // More robust table detection
+            const isTable = isMarkdownTable(markdown) || markdown.includes('| Time |') || 
+                            (lines.length >= 3 && lines[0].includes('|') && lines[1].includes('---'));
+            
+            console.log('MarkdownTable parsing:', {
+                isTable,
+                linesCount: lines.length,
+                firstLine: lines[0],
+                secondLine: lines[1],
+                hasTimeHeader: markdown.includes('| Time |'),
+                headers: lines[0].split('|').map(h => h.trim()).filter(h => h.length > 0)
+            });
+            
+            if (!isTable) return `<pre>${markdown}</pre>`;
+            
+            const headers = lines[0].split('|').map(h => h.trim()).filter(h => h.length > 0);
+            const dataLines = lines.slice(2);
+            
+            const rows = dataLines
+                .filter(line => line.trim().startsWith('|') && line.trim().length > 1)
+                .map(line => {
+                    const cells = line.split('|').map(cell => cell.trim());
+                    const alignedCells = [];
+                    for (let i = 0; i < headers.length; i++) {
+                        const cellValue = cells[i + 1] || '-';
+                        alignedCells.push(cellValue === '' ? '-' : cellValue);
+                    }
+                    return alignedCells;
+                })
+                .filter(row => row.some(cell => cell !== '-' && cell.length > 0));
+
+            const getCellStyle = (cell, headerIndex) => {
+                const header = headers[headerIndex]?.toLowerCase() || '';
+                const cellLower = cell.toLowerCase();
+                
+                if (cell === '-' || cell === '' || cell === 'N/A') {
+                    return 'empty';
+                }
+                
+                if (header.includes('severity')) {
+                    if (cellLower === 'critical') return 'critical';
+                }
+                
+                if (header.includes('status')) {
+                    if (cellLower.includes('active')) return 'active';
+                }
+                
+                return '';
+            };
+
+            let html = '<div class="table"><table>';
+            
+            // Headers
+            html += '<thead><tr>';
+            headers.forEach(h => {
+                html += `<th><strong>${h}</strong></th>`;
+            });
+            html += '</tr></thead>';
+            
+            // Body
+            html += '<tbody>';
+            rows.forEach(row => {
+                html += '<tr>';
+                row.forEach((cell, j) => {
+                    const style = getCellStyle(cell, j);
+                    html += `<td class="${style}">${cell}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table></div>';
+            
+            return html;
+        }
+
+        // Test the exact table
+        document.getElementById('table1').innerHTML = renderMarkdownTable(exactTable);
+        
+        console.log('Exact table detection result:', isMarkdownTable(exactTable));
+        console.log('Exact table rendered successfully');
+    </script>
+</body>
+</html> 

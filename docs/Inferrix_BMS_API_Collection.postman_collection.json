@@ -1,0 +1,122 @@
+{
+  "info": {
+    "name": "Inferrix BMS API Collection",
+    "_postman_id": "inferrix-bms-api",
+    "description": "Collection to test login, devices and telemetry APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Login - Get JWT Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://cloud.inferrix.com/api/auth/login",
+          "protocol": "https",
+          "host": [
+            "cloud",
+            "inferrix",
+            "com"
+          ],
+          "path": [
+            "api",
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"your_email@example.com\",\n  \"password\": \"your_password\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Devices",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "https://cloud.inferrix.com/api/user/devices?page=0&pageSize=10",
+          "protocol": "https",
+          "host": [
+            "cloud",
+            "inferrix",
+            "com"
+          ],
+          "path": [
+            "api",
+            "user",
+            "devices"
+          ],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "pageSize",
+              "value": "10"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Get Telemetry",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{jwt_token}}"
+          }
+        ],
+        "url": {
+          "raw": "https://cloud.inferrix.com/api/plugins/telemetry/DEVICE/{{entityId}}/values/timeseries?keys=temperature,humidity",
+          "protocol": "https",
+          "host": [
+            "cloud",
+            "inferrix",
+            "com"
+          ],
+          "path": [
+            "api",
+            "plugins",
+            "telemetry",
+            "DEVICE",
+            "{{entityId}}",
+            "values",
+            "timeseries"
+          ],
+          "query": [
+            {
+              "key": "keys",
+              "value": "temperature,humidity"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "jwt_token",
+      "value": ""
+    },
+    {
+      "key": "entityId",
+      "value": ""
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+how i spent time
+--------------------
+device name was hardcoded in code..now its dynamically fetched from APIs via user prompt +  nlp
+
+
+many static things /hardcoded were removed and dynamic api fetch
+
+
+google gemini pro api  was giivng issue.it was fized and as fallback option open api was added
+
+login screen was not dynamically working with jwt (dummy users) lot of time got wasted in it..finaly rmeoved login screen..will do later.
+

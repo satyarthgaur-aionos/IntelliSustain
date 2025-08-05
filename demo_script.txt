@@ -1,0 +1,124 @@
+🚦 INFERRIX AI AGENT DEMO SCRIPT
+================================
+
+🎯 DEMO OBJECTIVE
+Showcase a production-ready, enterprise-grade AI agent that intelligently manages Inferrix IoT devices through natural language conversations.
+
+📋 PRE-DEMO CHECKLIST
+- [ ] All services running (backend, frontend, database)
+- [ ] Inferrix API accessible and responding
+- [ ] Test login with demo credentials
+- [ ] Have backup demo data ready
+- [ ] Test on different screen sizes
+
+🔐 STEP 1: AUTHENTICATION & SECURITY
+1. Navigate to http://localhost:5173
+2. Login with: tech@inferrix.com / password123
+3. Highlight: JWT token generation, secure session
+4. Show: User welcome message in header
+5. Point out: Logout button prominently placed
+
+🎨 STEP 2: UI/UX EXCELLENCE
+1. Show: Clean, professional interface
+2. Highlight: Dynamic device dropdown (no hardcoding)
+3. Demonstrate: Prompt suggestions (clickable)
+4. Show: Responsive design on different screen sizes
+5. Point out: Loading states and error handling
+
+🤖 STEP 3: CORE AI CAPABILITIES
+
+A. ALARM MANAGEMENT
+- "Show all critical alarms"
+- "Show me alarms for Tower A"
+- "List devices with low battery"
+- "Show top 3 alarm types"
+
+B. DEVICE MONITORING
+- "Check if device HVAC-01 is online"
+- "Show temperature for IAQ Sensor V2"
+- "Get humidity readings for RH/T Sensor"
+- "Check device health status"
+
+C. ADVANCED ANALYTICS
+- "Summarize alarms from the last 24 hours"
+- "What's the highest severity alarm?"
+- "Show telemetry health for all devices"
+
+D. ALARM OPERATIONS
+- "Acknowledge alarm 12345" (if available)
+
+🔧 STEP 4: TECHNICAL EXCELLENCE
+
+A. NO HARDCODING
+- Show: Device dropdown populated from live API
+- Demonstrate: All responses come from Inferrix API
+- Point out: LLM only used for summaries/explanations
+
+B. ERROR HANDLING
+- Try: Invalid device names
+- Show: Graceful error messages
+- Demonstrate: Auto-logout on expired tokens
+
+C. PERFORMANCE
+- Show: Fast response times
+- Highlight: Rate limiting protection
+- Demonstrate: Concurrent user support
+
+🎯 STEP 5: ENTERPRISE FEATURES
+
+A. SECURITY
+- JWT authentication
+- Rate limiting (30 req/min)
+- Input validation
+- CORS protection
+
+B. RELIABILITY
+- Comprehensive error handling
+- Timeout management
+- Fallback mechanisms
+- Health checks
+
+C. MAINTAINABILITY
+- Clean, documented code
+- Modular architecture
+- Easy deployment
+- Scalable design
+
+🚀 STEP 6: DEMO HIGHLIGHTS
+
+KEY TALKING POINTS:
+1. "This is production-ready code, not a prototype"
+2. "All data comes from live Inferrix API - no hardcoding"
+3. "Enterprise-grade security and error handling"
+4. "Modern, responsive UI that works on all devices"
+5. "Intelligent AI that understands context and intent"
+6. "15+ specialized tools for different Inferrix operations"
+
+TECHNICAL FEATURES TO EMPHASIZE:
+- Multi-tool routing based on natural language
+- Graceful fallbacks when queries aren't understood
+- Real-time device discovery and monitoring
+- Professional error handling and user feedback
+- Mobile-responsive, accessible design
+
+BUSINESS VALUE:
+- Reduces time to find and resolve issues
+- Natural language interface reduces training needs
+- Real-time monitoring and alerting
+- Scalable architecture for enterprise deployment
+- Integration with existing Inferrix infrastructure
+
+🎉 CLOSING
+- "This demonstrates the future of IoT management"
+- "Ready for immediate enterprise deployment"
+- "Questions about implementation or customization?"
+
+DEMO SUCCESS METRICS:
+- [ ] All queries return meaningful responses
+- [ ] UI is professional and responsive
+- [ ] Error handling works gracefully
+- [ ] No hardcoded data visible
+- [ ] Security features demonstrated
+- [ ] Performance is smooth and fast
+
+GOOD LUCK! 🚀
