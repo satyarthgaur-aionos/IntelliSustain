@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 🚦 Inferrix AI Agent Demo
 
 A **production-ready, enterprise-grade AI Agent** that integrates with the Inferrix IoT platform to provide intelligent monitoring, alarm management, and device health insights through natural language conversations.
@@ -321,3 +322,6 @@ Before your demo, ensure:
 - [ ] Prepare demo script and key talking points
 
 **Good luck with your demo! 🚀**
+=======
+# IntelliSustain
+>>>>>>> 721329a9d4c3567832b01e7a028223bc0c84bddd
