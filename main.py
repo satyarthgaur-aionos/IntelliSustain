@@ -77,6 +77,19 @@ except ImportError as e:
     print(f"⚠️  Warning: Database modules not available: {e}")
     DATABASE_AVAILABLE = False
 
+# Try to import AI Magic Core and Enhanced Agentic Agent
+try:
+    from ai_magic_core import (
+        conversation_memory, multi_device_processor, proactive_insights,
+        nlp_processor, rich_response, multi_lang, smart_notifications, self_healing
+    )
+    from enhanced_agentic_agent import get_enhanced_agentic_agent
+    print("✅ AI Magic Core and Enhanced Agentic Agent imported successfully")
+    AI_MAGIC_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️  Warning: AI Magic Core not available: {e}")
+    AI_MAGIC_AVAILABLE = False
+
 app = FastAPI(title="Inferrix AI Agent API", version="1.0.0")
 
 # Mount static files (built React app)
@@ -218,15 +231,26 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
         
-        # Try to use enhanced agent if available
-        if DATABASE_AVAILABLE:
+        # Use enhanced agentic agent if available
+        if AI_MAGIC_AVAILABLE and DATABASE_AVAILABLE:
             try:
-                from enhanced_agentic_agent import get_enhanced_agentic_agent
                 agent = get_enhanced_agentic_agent()
                 response = agent.process_query(prompt.query, prompt.user, prompt.device or "")
+                
+                # Update conversation memory if available
+                if conversation_memory:
+                    conversation_memory.add_to_history(
+                        prompt.user, 
+                        prompt.query, 
+                        response, 
+                        prompt.device
+                    )
+                
                 if not response:
                     response = "No data found or unable to answer your query."
-            except:
+                    
+            except Exception as e:
+                print(f"Enhanced agent error: {e}")
                 response = f"Demo response to: {prompt.query}"
         else:
             response = f"Demo response to: {prompt.query}"
@@ -235,8 +259,20 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
         
         return {
             "response": response, 
-            "tool": "enhanced_agentic_agent" if DATABASE_AVAILABLE else "demo_agent",
-            "timestamp": time.time()
+            "tool": "enhanced_agentic_agent" if AI_MAGIC_AVAILABLE and DATABASE_AVAILABLE else "demo_agent",
+            "timestamp": time.time(),
+            "features_available": {
+                "ai_magic": AI_MAGIC_AVAILABLE,
+                "database": DATABASE_AVAILABLE,
+                "conversation_memory": conversation_memory is not None if AI_MAGIC_AVAILABLE else False,
+                "multi_device": multi_device_processor is not None if AI_MAGIC_AVAILABLE else False,
+                "proactive_insights": proactive_insights is not None if AI_MAGIC_AVAILABLE else False,
+                "nlp_processor": nlp_processor is not None if AI_MAGIC_AVAILABLE else False,
+                "rich_response": rich_response is not None if AI_MAGIC_AVAILABLE else False,
+                "multi_lang": multi_lang is not None if AI_MAGIC_AVAILABLE else False,
+                "smart_notifications": smart_notifications is not None if AI_MAGIC_AVAILABLE else False,
+                "self_healing": self_healing is not None if AI_MAGIC_AVAILABLE else False
+            }
         }
     except Exception as e:
         print(f"Chat error: {e}")
@@ -258,15 +294,26 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
         
-        # Try to use enhanced agent if available
-        if DATABASE_AVAILABLE:
+        # Use enhanced agentic agent with AI magic features
+        if AI_MAGIC_AVAILABLE and DATABASE_AVAILABLE:
             try:
-                from enhanced_agentic_agent import get_enhanced_agentic_agent
                 agent = get_enhanced_agentic_agent()
                 response = agent.process_query(prompt.query, prompt.user, prompt.device or "")
+                
+                # Apply AI Magic Core features
+                if conversation_memory:
+                    conversation_memory.add_to_history(
+                        prompt.user, 
+                        prompt.query, 
+                        response, 
+                        prompt.device
+                    )
+                
                 if not response:
                     response = "No data found or unable to answer your query."
-            except:
+                    
+            except Exception as e:
+                print(f"Enhanced agent error: {e}")
                 response = f"Enhanced demo response to: {prompt.query}"
         else:
             response = f"Enhanced demo response to: {prompt.query}"
@@ -275,7 +322,7 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
         
         return {
             "response": response, 
-            "tool": "enhanced_agentic_agent" if DATABASE_AVAILABLE else "demo_enhanced_agent",
+            "tool": "enhanced_agentic_agent" if AI_MAGIC_AVAILABLE and DATABASE_AVAILABLE else "demo_enhanced_agent",
             "timestamp": time.time(),
             "features": [
                 "conversational_memory",
@@ -287,7 +334,19 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
                 "self_healing",
                 "smart_notifications",
                 "multi_language_support"
-            ]
+            ],
+            "features_available": {
+                "ai_magic": AI_MAGIC_AVAILABLE,
+                "database": DATABASE_AVAILABLE,
+                "conversation_memory": conversation_memory is not None if AI_MAGIC_AVAILABLE else False,
+                "multi_device": multi_device_processor is not None if AI_MAGIC_AVAILABLE else False,
+                "proactive_insights": proactive_insights is not None if AI_MAGIC_AVAILABLE else False,
+                "nlp_processor": nlp_processor is not None if AI_MAGIC_AVAILABLE else False,
+                "rich_response": rich_response is not None if AI_MAGIC_AVAILABLE else False,
+                "multi_lang": multi_lang is not None if AI_MAGIC_AVAILABLE else False,
+                "smart_notifications": smart_notifications is not None if AI_MAGIC_AVAILABLE else False,
+                "self_healing": self_healing is not None if AI_MAGIC_AVAILABLE else False
+            }
         }
     except Exception as e:
         print(f"Enhanced chat error: {e}")
@@ -367,7 +426,8 @@ def api_root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
-        "database_available": DATABASE_AVAILABLE
+        "database_available": DATABASE_AVAILABLE,
+        "ai_magic_available": AI_MAGIC_AVAILABLE
     }
 
 @app.get("/health")
@@ -379,7 +439,8 @@ def health():
             "status": "✅ FastAPI server is running", 
             "timestamp": time.time(),
             "version": "1.0.0",
-            "database_available": DATABASE_AVAILABLE
+            "database_available": DATABASE_AVAILABLE,
+            "ai_magic_available": AI_MAGIC_AVAILABLE
         }
     except Exception as e:
         return JSONResponse(
@@ -416,7 +477,19 @@ def api_info():
             "Why is the east wing warm and noisy today?",
             "Turn off HVAC and dim lights in the east wing on Saturday and Sunday",
             "Lower the temperature by 2 degrees in Conference Room B for the next 3 hours"
-        ]
+        ],
+        "features_available": {
+            "ai_magic": AI_MAGIC_AVAILABLE,
+            "database": DATABASE_AVAILABLE,
+            "conversation_memory": conversation_memory is not None if AI_MAGIC_AVAILABLE else False,
+            "multi_device": multi_device_processor is not None if AI_MAGIC_AVAILABLE else False,
+            "proactive_insights": proactive_insights is not None if AI_MAGIC_AVAILABLE else False,
+            "nlp_processor": nlp_processor is not None if AI_MAGIC_AVAILABLE else False,
+            "rich_response": rich_response is not None if AI_MAGIC_AVAILABLE else False,
+            "multi_lang": multi_lang is not None if AI_MAGIC_AVAILABLE else False,
+            "smart_notifications": smart_notifications is not None if AI_MAGIC_AVAILABLE else False,
+            "self_healing": self_healing is not None if AI_MAGIC_AVAILABLE else False
+        }
     }
 
 @app.get("/debug/devices")
