@@ -323,7 +323,7 @@ export default function Chat({ devices, selectedDeviceId, onSelectDevice, onLogo
     try {
       const jwt = localStorage.getItem("jwt");
       const res = await axios.post(
-        "http://localhost:8000/chat/enhanced",
+        "/chat/enhanced",
         {
           query,           // the user's query string
           user: userEmail, // dynamically extracted user email

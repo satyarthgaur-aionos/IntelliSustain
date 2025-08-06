@@ -141,7 +141,7 @@ export default function VoiceChat() {
     async function checkApiStatus() {
       try {
         const jwt = localStorage.getItem("jwt");
-        const res = await axios.get("http://localhost:8000/health", {
+        const res = await axios.get("/health", {
           headers: { Authorization: "Bearer " + jwt }
         });
         setApiStatus("connected");
@@ -158,7 +158,7 @@ export default function VoiceChat() {
     async function fetchDevices() {
       try {
         const jwt = localStorage.getItem("jwt");
-        const res = await axios.get("http://localhost:8000/intellisustain/devices", {
+        const res = await axios.get("/inferrix/devices", {
           headers: { Authorization: "Bearer " + jwt }
         });
         setDeviceList(res.data.devices || []);
@@ -216,7 +216,7 @@ export default function VoiceChat() {
       setAbortController(controller);
       
       const res = await axios.post(
-        "http://localhost:8000/chat/enhanced",
+        "/chat/enhanced",
         {
           query: mappedQuery,
           user,

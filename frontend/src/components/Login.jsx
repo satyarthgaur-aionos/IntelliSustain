@@ -11,7 +11,7 @@ export default function Login({ onLoginSuccess }) {
     setError("");
 
     try {
-      const res = await axios.post("http://localhost:8000/login", {
+      const res = await axios.post("/login", {
         email, // Use email as per backend
         password,
       });
