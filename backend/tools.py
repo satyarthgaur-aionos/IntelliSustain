@@ -24,21 +24,21 @@ load_dotenv()
 
 INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
 
-# MCP Client configuration
-MCP_BASE_URL = "http://localhost:8001"
+# MCP Client configuration - now integrated into main app
+MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8000")
 
 def get_inferrix_token():
     return os.getenv("INFERRIX_API_TOKEN", "").strip()
 
 def fetch_alarms_from_mcp():
-    """Fetch active alarms from MCP server"""
+    """Fetch active alarms from integrated MCP endpoints"""
     try:
         response = requests.get(f"{MCP_BASE_URL}/inferrix/alarms", timeout=10)
         response.raise_for_status()
         return response.json()
     except Exception as e:
-        print("❌ Error calling MCP server:", e)
-        raise Exception(f"❌ Error calling MCP server: {e}")
+        print("❌ Error calling integrated MCP endpoints:", e)
+        raise Exception(f"❌ Error calling integrated MCP endpoints: {e}")
 
 def fetch_active_alarms(state):
     """Fetch and filter active alarms based on query parameters"""
