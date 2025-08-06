@@ -126,8 +126,12 @@ app = FastAPI(title="Inferrix AI Agent API", version="1.0.0")
 
 # Mount static files (built React app)
 try:
-    app.mount("/static", StaticFiles(directory="static"), name="static")
-    print("✅ Static files mounted successfully")
+    if os.path.exists("static"):
+        app.mount("/static", StaticFiles(directory="static"), name="static")
+        print("✅ Static files mounted successfully")
+    else:
+        print("⚠️  Warning: Static files not found. Frontend not built yet.")
+        print("   The app will still work with API endpoints only.")
 except Exception as e:
     print(f"⚠️  Warning: Could not mount static files: {e}")
 
