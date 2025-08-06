@@ -1147,7 +1147,8 @@ class EnhancedAgenticInferrixAgent:
                     value = 2
                 else:
                     try:
-                        value = float(value_raw)
+                        # For fan speed, use integer values
+                        value = int(float(value_raw))
                     except Exception:
                         return f"❌ Invalid fan speed value: {value_raw}. Use 0 (low), 1 (medium), or 2 (high)."
                 device_id = self._map_device_name_to_id(location_phrase)
@@ -1170,15 +1171,10 @@ class EnhancedAgenticInferrixAgent:
             r"fan (?:speed|) (?:to|set to) (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?)"
         ]
         
-        # Debug: Print the query being tested
-        print(f"[DEBUG] Testing fan speed patterns for query: '{user_query}'")
-        
         set_fan_speed_match = None
-        for i, pattern in enumerate(fan_speed_patterns):
+        for pattern in fan_speed_patterns:
             set_fan_speed_match = re.search(pattern, user_query, re.IGNORECASE)
             if set_fan_speed_match:
-                print(f"[DEBUG] Pattern {i+1} matched: {pattern}")
-                print(f"[DEBUG] Groups: {set_fan_speed_match.groups()}")
                 break
         if set_fan_speed_match:
             # Handle different pattern formats
@@ -1218,7 +1214,8 @@ class EnhancedAgenticInferrixAgent:
                 value = 2
             else:
                 try:
-                    value = float(value_raw)
+                    # For fan speed, use integer values
+                    value = int(float(value_raw))
                 except Exception:
                     return f"❌ Invalid fan speed value: {value_raw}. Use 0 (low/lowest/minimum), 1 (medium), or 2 (high/highest/maximum)."
             
@@ -4120,7 +4117,11 @@ class EnhancedAgenticInferrixAgent:
         if resp.get('error'):
             return f"❌ Failed to set '{matched_key}' for {entity_type} {entity_id}: {resp['error']}"
         else:
-            return f"✅ {matched_key.title()} set to {value}°C for {location or entity_id}"
+            # Don't add °C for fan speed controls
+            if 'fan' in matched_key.lower():
+                return f"✅ {matched_key.title()} set to {value} for {location or entity_id}"
+            else:
+                return f"✅ {matched_key.title()} set to {value}°C for {location or entity_id}"
 
     # --- PATCH: Enhanced device matching ---
 
