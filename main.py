@@ -74,7 +74,7 @@ try:
             if not admin_user:
                 admin_user = User(
                     email="admin@inferrix.com",
-                    hashed_password="$2b$12$EUYH79Mi2uyxB9nmDF3bLOENzg30BHwowVuK1IsMigvw2RaxfOyJ2",
+                    hashed_password="$2b$12$z0BJ4o0UuQ0OoY.6BV7TC.bXllQo.4utSdcGRSLSqarnPTxBMDi9q",
                     is_active=True,
                     role="admin"
                 )
@@ -86,7 +86,7 @@ try:
             if not demo_user:
                 demo_user = User(
                     email="demo@inferrix.com",
-                    hashed_password="$2b$12$m9FTPOZH0Cz7QJGY9O3/WekXNVssZq2vWElNWI8AjQ.ld.v3cLH76",
+                    hashed_password="$2b$12$YfRS2wyzNhe3PAeFECkzeusp34.RxG7sC2EmDfcksWdysI4yrQcIy",
                     is_active=True,
                     role="user"
                 )
@@ -98,7 +98,7 @@ try:
             if not tech_user:
                 tech_user = User(
                     email="tech@intellisustain.com",
-                    hashed_password="$2b$12$8p.bMoNeHn.zfSQxyoRCA.LALbtH9I8hlYlZOdbdFruPwheY7a2sS",
+                    hashed_password="$2b$12$PXEd.nxLEJkA2qeGfmwVC.5uaGbXjFbZXDyh.iRoXPLw/QmdUXu1O",
                     is_active=True,
                     role="admin"
                 )
