@@ -2,9 +2,13 @@ import dotenv
 import requests
 import os
 import time
+import sys
 from collections import defaultdict
 from typing import Optional
 dotenv.load_dotenv()
+
+# Add backend directory to Python path
+sys.path.append('backend')
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
