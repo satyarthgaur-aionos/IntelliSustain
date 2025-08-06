@@ -1,13 +1,13 @@
+import sys
+# Add backend directory to Python path BEFORE any imports
+sys.path.append('backend')
+
 import dotenv
 import requests
 import os
 import time
-import sys
 from collections import defaultdict
 from typing import Optional
-
-# Add backend directory to Python path BEFORE any imports
-sys.path.append('backend')
 
 dotenv.load_dotenv()
 
