@@ -8,12 +8,26 @@ dotenv.load_dotenv()
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from enhanced_agentic_agent import get_enhanced_agentic_agent
 from auth_db import get_current_user
 
+# Import database components
+from database import engine, Base
+from user_model import User
+
+# Create database tables on startup
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI(title="Inferrix AI Agent API", version="1.0.0")
+
+# Mount static files (built React app)
+try:
+    app.mount("/static", StaticFiles(directory="static"), name="static")
+except Exception as e:
+    print(f"Warning: Could not mount static files: {e}")
 
 # Rate limiting
 request_counts = defaultdict(list)
@@ -52,7 +66,7 @@ async def log_exceptions(request: Request, call_next):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*","https://d4c12a824b71.ngrok-free.app"],  # In production, restrict to your frontend domain
+    allow_origins=["*"],  # In production, restrict to your frontend domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -85,7 +99,22 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         content={"error": exc.detail, "code": f"HTTP_{exc.status_code}"}
     )
 
-# === Endpoints ===
+# === Frontend Routes ===
+@app.get("/")
+async def serve_frontend():
+    """Serve the React frontend"""
+    try:
+        return FileResponse("static/index.html")
+    except Exception as e:
+        # Fallback to API info if frontend not built
+        return {
+            "message": "Inferrix AI Agent Backend is Running",
+            "frontend": "Not built or not found",
+            "api_docs": "/docs",
+            "health": "/health"
+        }
+
+# === API Endpoints ===
 @app.post("/login")
 def login(user: User):
     """Authenticate user and return JWT token"""
@@ -117,7 +146,7 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
             enhanced_query = prompt.query + device_context
             print(f"[DEBUG] Enhanced query with device: '{enhanced_query}'")
             agent = get_enhanced_agentic_agent()
-        response = agent.process_query(enhanced_query, prompt.user, prompt.device)
+            response = agent.process_query(enhanced_query, prompt.user, prompt.device)
         else:
             print(f"[DEBUG] No device selected, using original query")
             agent = get_enhanced_agentic_agent()
@@ -245,38 +274,17 @@ def inferrix_api_status():
     except Exception as e:
         return {"status": "Inferrix API unreachable", "error": str(e)}
 
-@app.get("/")
-def root():
-    """Root endpoint with API status"""
+@app.get("/api")
+def api_root():
+    """API root endpoint"""
     status = inferrix_api_status()
-    if status.get("status") == "Inferrix API reachable":
-        return {
-            "message": "Inferrix AI Agent Backend is Running",
-            "status": status,
-            "version": "1.0.0"
-        }
-    # If unreachable, show a friendly HTML message
-    return HTMLResponse(
-        f"""
-        <html>
-        <head><title>Inferrix AI Agent Backend</title></head>
-        <body style='font-family:sans-serif; background:#f8fafc; color:#222; text-align:center; padding-top:60px;'>
-            <h1>🚦 Inferrix AI Agent Backend is Running</h1>
-            <p style='color:#e53e3e; font-size:1.2em;'>
-                <b>Warning:</b> Inferrix API is currently <b>unreachable</b>.<br/>
-                Please check your API token, network, or Inferrix service status.<br/>
-                <span style='font-size:0.9em; color:#666;'>({status.get('error','')})</span>
-            </p>
-            <hr style='margin:2em 0;'/>
-            <p style='color:#555;'>
-                The backend server is <b>up</b> and ready to serve requests.<br/>
-                <span style='font-size:0.9em;'>If you are an admin, check the backend logs for more details.</span>
-            </p>
-        </body>
-        </html>
-        """,
-        status_code=200
-    )
+    return {
+        "message": "Inferrix AI Agent API",
+        "status": status,
+        "version": "1.0.0",
+        "docs": "/docs",
+        "health": "/health"
+    }
 
 @app.get("/health")
 def health():
