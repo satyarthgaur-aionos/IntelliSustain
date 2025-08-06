@@ -11,7 +11,12 @@ export default function Login({ onLoginSuccess }) {
     setError("");
 
     try {
-      const res = await axios.post("/login", {
+      // Use localhost for local development, relative URL for production
+      const baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:8000' 
+        : '';
+      
+      const res = await axios.post(`${baseURL}/login`, {
         email, // Use email as per backend
         password,
       });

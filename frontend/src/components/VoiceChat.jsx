@@ -141,7 +141,12 @@ export default function VoiceChat() {
     async function checkApiStatus() {
       try {
         const jwt = localStorage.getItem("jwt");
-        const res = await axios.get("/health", {
+        // Use localhost for local development, relative URL for production
+      const baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:8000' 
+        : '';
+      
+      const res = await axios.get(`${baseURL}/health`, {
           headers: { Authorization: "Bearer " + jwt }
         });
         setApiStatus("connected");
@@ -158,7 +163,7 @@ export default function VoiceChat() {
     async function fetchDevices() {
       try {
         const jwt = localStorage.getItem("jwt");
-        const res = await axios.get("/inferrix/devices", {
+        const res = await axios.get(`${baseURL}/inferrix/devices`, {
           headers: { Authorization: "Bearer " + jwt }
         });
         setDeviceList(res.data.devices || []);
@@ -215,8 +220,8 @@ export default function VoiceChat() {
       const controller = new AbortController();
       setAbortController(controller);
       
-      const res = await axios.post(
-        "/chat/enhanced",
+              const res = await axios.post(
+          `${baseURL}/chat/enhanced`,
         {
           query: mappedQuery,
           user,
