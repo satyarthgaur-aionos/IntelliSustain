@@ -24,94 +24,95 @@ try:
         print("❌ Database engine is not available - DATABASE_URL may be empty")
         DATABASE_AVAILABLE = False
     else:
-        # Create database tables on startup
         try:
-            Base.metadata.create_all(bind=engine)
-            print("✅ Database tables created successfully")
+            # Create database tables on startup
+            try:
+                Base.metadata.create_all(bind=engine)
+                print("✅ Database tables created successfully")
+            except Exception as e:
+                print(f"⚠️  Warning: Could not create database tables: {e}")
+            
+            # Migrate existing table to add missing columns
+            try:
+                with engine.connect() as connection:
+                    # Check if columns exist first using text() for raw SQL
+                    from sqlalchemy import text
+                    result = connection.execute(text("""
+                        SELECT column_name 
+                        FROM information_schema.columns 
+                        WHERE table_name = 'users' AND table_schema = 'public'
+                    """))
+                    existing_columns = [row[0] for row in result]
+                    
+                    print(f"Existing columns: {existing_columns}")
+                    
+                    # Add is_active column if it doesn't exist
+                    if 'is_active' not in existing_columns:
+                        connection.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE"))
+                        print("✅ Added is_active column")
+                    
+                    # Add role column if it doesn't exist
+                    if 'role' not in existing_columns:
+                        connection.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'"))
+                        print("✅ Added role column")
+                    
+                    # Update existing users with default values
+                    connection.execute(text("UPDATE users SET is_active = TRUE WHERE is_active IS NULL"))
+                    connection.execute(text("UPDATE users SET role = 'admin' WHERE role IS NULL"))
+                    print("✅ Updated existing users with default values")
+                    
+                    connection.commit()
+            except Exception as e:
+                print(f"⚠️  Warning: Could not migrate table: {e}")
+            
+            # Create users if they don't exist
+            from database import SessionLocal
+            db = SessionLocal()
+            
+            # Create admin user
+            admin_user = db.query(User).filter(User.email == "admin@inferrix.com").first()
+            if not admin_user:
+                admin_user = User(
+                    email="admin@inferrix.com",
+                    hashed_password=get_password_hash("admin123"),
+                    is_active=True,
+                    role="admin"
+                )
+                db.add(admin_user)
+                print("✅ Admin user created")
+            
+            # Create demo user
+            demo_user = db.query(User).filter(User.email == "demo@inferrix.com").first()
+            if not demo_user:
+                demo_user = User(
+                    email="demo@inferrix.com",
+                    hashed_password=get_password_hash("demo123"),
+                    is_active=True,
+                    role="user"
+                )
+                db.add(demo_user)
+                print("✅ Demo user created")
+            
+            # Create tech user with existing password hash
+            tech_user = db.query(User).filter(User.email == "tech@intellisustain.com").first()
+            if not tech_user:
+                tech_user = User(
+                    email="tech@intellisustain.com",
+                    hashed_password="$2b$12$YU4exsnOVpF.9qldXfDhl.n5e22PhRKLGkh9ilbMCFanPoZyToDny",
+                    is_active=True,
+                    role="admin"
+                )
+                db.add(tech_user)
+                print("✅ Tech user created")
+            
+            db.commit()
+            db.close()
+            print("✅ Database setup completed successfully")
+            
+            DATABASE_AVAILABLE = True
         except Exception as e:
-            print(f"⚠️  Warning: Could not create database tables: {e}")
-        
-        # Migrate existing table to add missing columns
-        try:
-            with engine.connect() as connection:
-                # Check if columns exist first using text() for raw SQL
-                from sqlalchemy import text
-                result = connection.execute(text("""
-                    SELECT column_name 
-                    FROM information_schema.columns 
-                    WHERE table_name = 'users' AND table_schema = 'public'
-                """))
-                existing_columns = [row[0] for row in result]
-                
-                print(f"Existing columns: {existing_columns}")
-                
-                # Add is_active column if it doesn't exist
-                if 'is_active' not in existing_columns:
-                    connection.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE"))
-                    print("✅ Added is_active column")
-                
-                # Add role column if it doesn't exist
-                if 'role' not in existing_columns:
-                    connection.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'"))
-                    print("✅ Added role column")
-                
-                # Update existing users with default values
-                connection.execute(text("UPDATE users SET is_active = TRUE WHERE is_active IS NULL"))
-                connection.execute(text("UPDATE users SET role = 'admin' WHERE role IS NULL"))
-                print("✅ Updated existing users with default values")
-                
-                connection.commit()
-        except Exception as e:
-            print(f"⚠️  Warning: Could not migrate table: {e}")
-        
-        # Create users if they don't exist
-        from database import SessionLocal
-        db = SessionLocal()
-        
-        # Create admin user
-        admin_user = db.query(User).filter(User.email == "admin@inferrix.com").first()
-        if not admin_user:
-            admin_user = User(
-                email="admin@inferrix.com",
-                hashed_password=get_password_hash("admin123"),
-                is_active=True,
-                role="admin"
-            )
-            db.add(admin_user)
-            print("✅ Admin user created")
-        
-        # Create demo user
-        demo_user = db.query(User).filter(User.email == "demo@inferrix.com").first()
-        if not demo_user:
-            demo_user = User(
-                email="demo@inferrix.com",
-                hashed_password=get_password_hash("demo123"),
-                is_active=True,
-                role="user"
-            )
-            db.add(demo_user)
-            print("✅ Demo user created")
-        
-        # Create tech user with existing password hash
-        tech_user = db.query(User).filter(User.email == "tech@intellisustain.com").first()
-        if not tech_user:
-            tech_user = User(
-                email="tech@intellisustain.com",
-                hashed_password="$2b$12$YU4exsnOVpF.9qldXfDhl.n5e22PhRKLGkh9ilbMCFanPoZyToDny",
-                is_active=True,
-                role="admin"
-            )
-            db.add(tech_user)
-            print("✅ Tech user created")
-        
-        db.commit()
-        db.close()
-        print("✅ Database setup completed successfully")
-        
-        DATABASE_AVAILABLE = True
-    except Exception as e:
-        print(f"⚠️  Warning: Could not setup database: {e}")
-        DATABASE_AVAILABLE = False
+            print(f"⚠️  Warning: Could not setup database: {e}")
+            DATABASE_AVAILABLE = False
         
 except ImportError as e:
     print(f"⚠️  Warning: Database modules not available: {e}")
