@@ -221,6 +221,15 @@ async def serve_frontend():
             "health": "/health"
         }
 
+# Handle all other routes for SPA
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    """Serve the React app for all other routes (SPA routing)"""
+    try:
+        return FileResponse("static/index.html")
+    except Exception as e:
+        return {"error": "Frontend not available"}
+
 # === API Endpoints ===
 @app.post("/login")
 def login(user: User):
