@@ -1159,21 +1159,55 @@ class EnhancedAgenticInferrixAgent:
         # Enhanced fan speed patterns including "increase" commands
         fan_speed_patterns = [
             r"set (?:the )?(?:fan speed|speed) (?:in|at|for)? ?([\w\- ]+)? to (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?)",
+            r"set (?:the )?(?:fan speed|speed) to (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?) in ([\w\- ]+)",
+            r"set (?:the )?fan to (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?) speed (?:for|in|at) ([\w\- ]+)",
+            r"set (?:the )?fan to (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?) speed",
             r"increase (?:the )?(?:fan speed|speed) (?:in|at|for)? ?([\w\- ]+)? to (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?)",
             r"change (?:the )?(?:fan speed|speed) (?:in|at|for)? ?([\w\- ]+)? to (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?)",
             r"adjust (?:the )?(?:fan speed|speed) (?:in|at|for)? ?([\w\- ]+)? to (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?)",
-            r"(?:fan speed|speed) (?:in|at|for)? ?([\w\- ]+)? (?:to|set to|increase to) (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?)"
+            r"(?:fan speed|speed) (?:in|at|for)? ?([\w\- ]+)? (?:to|set to|increase to) (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?)",
+            r"fan (?:speed|) (?:to|set to) (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?) (?:for|in|at) ([\w\- ]+)",
+            r"fan (?:speed|) (?:to|set to) (low|medium|high|lowest|minimum|highest|maximum|\d{1,2}(?:\.\d+)?)"
         ]
         
+        # Debug: Print the query being tested
+        print(f"[DEBUG] Testing fan speed patterns for query: '{user_query}'")
+        
         set_fan_speed_match = None
-        for pattern in fan_speed_patterns:
+        for i, pattern in enumerate(fan_speed_patterns):
             set_fan_speed_match = re.search(pattern, user_query, re.IGNORECASE)
             if set_fan_speed_match:
+                print(f"[DEBUG] Pattern {i+1} matched: {pattern}")
+                print(f"[DEBUG] Groups: {set_fan_speed_match.groups()}")
                 break
         if set_fan_speed_match:
-            location_phrase = set_fan_speed_match.group(1) or device or ''
+            # Handle different pattern formats
+            groups = set_fan_speed_match.groups()
+            
+            if len(groups) == 2:
+                group1 = groups[0]
+                group2 = groups[1]
+                
+                # Check if group1 is a value and group2 is location
+                if (group1 and group1.strip().lower() in ['low', 'medium', 'high', 'lowest', 'minimum', 'highest', 'maximum', '0', '1', '2'] or 
+                    group1 and group1.strip().isdigit()) and group2 and not group2.strip().lower() in ['low', 'medium', 'high', 'lowest', 'minimum', 'highest', 'maximum', '0', '1', '2']:
+                    # Pattern: "set fan speed to [value] in [location]" or "fan to [value] speed for [location]"
+                    value_raw = group1.strip().lower()
+                    location_phrase = group2.strip() or device or ''
+                else:
+                    # Pattern: "set fan speed in [location] to [value]"
+                    location_phrase = group1 or device or ''
+                    value_raw = group2.strip().lower()
+            elif len(groups) == 1:
+                # Pattern: "set fan to [value] speed" (no location specified)
+                value_raw = groups[0].strip().lower()
+                location_phrase = device or ''
+            else:
+                # Fallback to original logic
+                location_phrase = set_fan_speed_match.group(1) or device or ''
+                value_raw = set_fan_speed_match.group(2).strip().lower()
+            
             location_phrase = location_phrase.strip()
-            value_raw = set_fan_speed_match.group(2).strip().lower()
             value_raw = map_hindi_to_english(value_raw)
             # Enhanced speed mapping with more variations
             if value_raw in ['low', 'lowest', 'minimum']:
