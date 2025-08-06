@@ -12,7 +12,7 @@ def test_alarm_queries():
     print("🔍 Testing alarm queries...")
     
     try:
-        from enhanced_agentic_agent import enhanced_agentic_agent
+        from enhanced_agentic_agent import get_enhanced_agentic_agent
         print("✅ Enhanced agent imported successfully")
         
         # Test alarm query

@@ -30,7 +30,7 @@ def test_analytics_functionality():
     
     try:
         # Import after setting environment variables
-        from enhanced_agentic_agent import enhanced_agentic_agent
+        from enhanced_agentic_agent import get_enhanced_agentic_agent
         print("✅ Enhanced agentic agent imported successfully")
         
         # Test the context extractor

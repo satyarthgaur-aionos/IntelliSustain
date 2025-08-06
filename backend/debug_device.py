@@ -12,7 +12,7 @@ def test_device_diagnosis():
     print("🔍 Testing device diagnosis...")
     
     try:
-        from enhanced_agentic_agent import enhanced_agentic_agent
+        from enhanced_agentic_agent import get_enhanced_agentic_agent
         print("✅ Enhanced agent imported successfully")
         
         # Test device mapping
@@ -20,21 +20,22 @@ def test_device_diagnosis():
         print(f"\nTesting device mapping for: {device_id}")
         
         # Test the mapping function directly
-        mapped_id = enhanced_agentic_agent._map_device_name_to_id(device_id)
+        agent = get_enhanced_agentic_agent()
+        mapped_id = agent._map_device_name_to_id(device_id)
         print(f"Mapped ID: {mapped_id}")
         
         # Test API request directly
         if mapped_id:
             print(f"\nTesting API request for mapped ID: {mapped_id}")
             try:
-                device_data = enhanced_agentic_agent._make_api_request(f"deviceInfos/{mapped_id}")
+                device_data = agent._make_api_request(f"deviceInfos/{mapped_id}")
                 print(f"API Response: {device_data}")
             except Exception as e:
                 print(f"API Error: {str(e)}")
         
         # Test the full diagnosis
         print(f"\nTesting full diagnosis query...")
-        result = enhanced_agentic_agent.process_query(f"Diagnose device {device_id}", "TestUser", device_id)
+        result = agent.process_query(f"Diagnose device {device_id}", "TestUser", device_id)
         print(f"Diagnosis Result: {result[:300]}...")
         
     except Exception as e:

@@ -4,7 +4,7 @@ Test All Weather and Risk Prompts
 Verify weather and risk analysis functionality
 """
 
-from enhanced_agentic_agent import enhanced_agentic_agent
+from enhanced_agentic_agent import get_enhanced_agentic_agent
 
 # Weather and Risk Analysis Prompts (New)
 weather_risk_prompts = [

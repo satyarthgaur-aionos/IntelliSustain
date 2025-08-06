@@ -10,7 +10,7 @@ from datetime import datetime
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from enhanced_agentic_agent import enhanced_agentic_agent
+from enhanced_agentic_agent import get_enhanced_agentic_agent
 
 def demo_ai_magic():
     """Demonstrate AI magic features"""
@@ -45,9 +45,10 @@ def demo_ai_magic():
         "What was the last device I asked about?"
     ]
     
+    agent = get_enhanced_agentic_agent()
     for i, query in enumerate(queries, 1):
         print(f"\n{i}. User: {query}")
-        response = enhanced_agentic_agent.process_query(query, user_id)
+        response = agent.process_query(query, user_id)
         print(f"   AI: {response}")
     
     # Scenario 2: Multi-Device Operations
@@ -62,7 +63,7 @@ def demo_ai_magic():
     
     for i, query in enumerate(multi_queries, 1):
         print(f"\n{i}. User: {query}")
-        response = enhanced_agentic_agent.process_query(query, user_id)
+        response = agent.process_query(query, user_id)
         print(f"   AI: {response}")
     
     # Scenario 3: Proactive Insights
@@ -77,7 +78,7 @@ def demo_ai_magic():
     
     for i, query in enumerate(insight_queries, 1):
         print(f"\n{i}. User: {query}")
-        response = enhanced_agentic_agent.process_query(query, user_id)
+        response = agent.process_query(query, user_id)
         print(f"   AI: {response}")
     
     # Scenario 4: Natural Language Control
@@ -92,7 +93,7 @@ def demo_ai_magic():
     
     for i, query in enumerate(control_queries, 1):
         print(f"\n{i}. User: {query}")
-        response = enhanced_agentic_agent.process_query(query, user_id)
+        response = agent.process_query(query, user_id)
         print(f"   AI: {response}")
     
     # Scenario 5: Rich Responses
@@ -107,7 +108,7 @@ def demo_ai_magic():
     
     for i, query in enumerate(rich_queries, 1):
         print(f"\n{i}. User: {query}")
-        response = enhanced_agentic_agent.process_query(query, user_id)
+        response = agent.process_query(query, user_id)
         print(f"   AI: {response}")
     
     # Scenario 6: Self-Healing
@@ -122,7 +123,7 @@ def demo_ai_magic():
     
     for i, query in enumerate(healing_queries, 1):
         print(f"\n{i}. User: {query}")
-        response = enhanced_agentic_agent.process_query(query, user_id)
+        response = agent.process_query(query, user_id)
         print(f"   AI: {response}")
     
     # Scenario 7: Smart Notifications
@@ -137,7 +138,7 @@ def demo_ai_magic():
     
     for i, query in enumerate(notification_queries, 1):
         print(f"\n{i}. User: {query}")
-        response = enhanced_agentic_agent.process_query(query, user_id)
+        response = agent.process_query(query, user_id)
         print(f"   AI: {response}")
     
     # Scenario 8: Multi-Language

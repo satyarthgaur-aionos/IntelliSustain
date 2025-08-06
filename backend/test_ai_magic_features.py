@@ -11,7 +11,7 @@ from datetime import datetime
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from enhanced_agentic_agent import enhanced_agentic_agent
+from enhanced_agentic_agent import get_enhanced_agentic_agent
 from ai_magic_core import conversation_memory, smart_notifications, self_healing
 
 def test_conversational_memory():
