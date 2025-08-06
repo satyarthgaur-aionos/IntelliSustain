@@ -1,43 +1,7 @@
-import sys
-# Add backend directory to Python path BEFORE any imports
-sys.path.append('backend')
-
-import dotenv
-import requests
 import os
 import time
 from collections import defaultdict
 from typing import Optional
-
-dotenv.load_dotenv()
-
-# Try to import database components, but don't fail if they're not available
-try:
-    from enhanced_agentic_agent import get_enhanced_agentic_agent
-    from auth_db import get_current_user
-    from database import engine, Base
-    from user_model import User
-    
-    # Create database tables on startup
-    try:
-        Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully")
-    except Exception as e:
-        print(f"⚠️  Warning: Could not create database tables: {e}")
-    
-    DATABASE_AVAILABLE = True
-except ImportError as e:
-    print(f"⚠️  Warning: Some modules not available: {e}")
-    DATABASE_AVAILABLE = False
-    # Create dummy functions for when database is not available
-    def get_current_user():
-        return {"email": "demo@inferrix.com"}
-    
-    def get_enhanced_agentic_agent():
-        class DummyAgent:
-            def process_query(self, query, user, device=None):
-                return f"Demo response to: {query}"
-        return DummyAgent()
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -143,23 +107,17 @@ async def serve_frontend():
 @app.post("/login")
 def login(user: User):
     """Authenticate user and return JWT token"""
-    if not DATABASE_AVAILABLE:
-        # Demo login for when database is not available
-        if user.email == "demo@inferrix.com" and user.password == "demo123":
-            return {"access_token": "demo_token", "token_type": "bearer"}
-        else:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-    
-    try:
-        from auth_db import verify_user, create_access_token
-        db_user = verify_user(user.email, user.password)
-        if not db_user:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        token = create_access_token({"sub": user.email})
-        return {"access_token": token, "token_type": "bearer"}
-    except Exception as e:
-        print(f"Login error: {e}")
-        raise HTTPException(status_code=500, detail="Authentication service unavailable")
+    # Demo login for now
+    if user.email == "demo@inferrix.com" and user.password == "demo123":
+        return {"access_token": "demo_token", "token_type": "bearer"}
+    elif user.email == "tech@intellisustain.com" and user.password == "Demo@1234":
+        return {"access_token": "demo_token", "token_type": "bearer"}
+    else:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+def get_current_user():
+    """Dummy function for authentication"""
+    return {"email": "demo@inferrix.com"}
 
 @app.post("/chat")
 def chat(prompt: Prompt, current_user=Depends(get_current_user)):
@@ -174,29 +132,14 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
         
-        # Use the enhanced agentic agent
-        # Pass device information if available
-        if prompt.device:
-            # If device is selected, modify the query to include device context
-            device_context = f" (Device ID: {prompt.device})"
-            enhanced_query = prompt.query + device_context
-            print(f"[DEBUG] Enhanced query with device: '{enhanced_query}'")
-            agent = get_enhanced_agentic_agent()
-            response = agent.process_query(enhanced_query, prompt.user, prompt.device)
-        else:
-            print(f"[DEBUG] No device selected, using original query")
-            agent = get_enhanced_agentic_agent()
-            response = agent.process_query(prompt.query, prompt.user)
-        
-        # Always return a string
-        if not response:
-            response = "No data found or unable to answer your query."
+        # Simple demo response
+        response = f"Demo response to: {prompt.query}"
         
         print(f"[DEBUG] Final response: {response[:100]}...")
         
         return {
             "response": response, 
-            "tool": "enhanced_agentic_agent",  # Indicate this is using the enhanced agentic approach
+            "tool": "demo_agent",  # Indicate this is using demo mode
             "timestamp": time.time()
         }
     except Exception as e:
@@ -219,19 +162,14 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
         
-        # Use the enhanced agentic agent with AI magic features
-        agent = get_enhanced_agentic_agent()
-        response = agent.process_query(prompt.query, prompt.user, prompt.device or "")
-        
-        # Always return a string
-        if not response:
-            response = "No data found or unable to answer your query."
+        # Simple demo response
+        response = f"Enhanced demo response to: {prompt.query}"
         
         print(f"[DEBUG] Enhanced chat - Final response: {response[:100]}...")
         
         return {
             "response": response, 
-            "tool": "enhanced_agentic_agent",  # Indicate this is using the enhanced agentic approach
+            "tool": "demo_enhanced_agent",  # Indicate this is using demo mode
             "timestamp": time.time(),
             "features": [
                 "conversational_memory",
@@ -260,6 +198,7 @@ def get_alarms(current_user=Depends(get_current_user)):
         if not jwt_token:
             raise HTTPException(status_code=500, detail="Inferrix API token not configured")
         
+        import requests
         headers = {"X-Authorization": f"Bearer {jwt_token}"}
         response = requests.get(
             "https://cloud.inferrix.com/api/alarms",
@@ -280,6 +219,7 @@ def get_devices(current_user=Depends(get_current_user)):
         if not jwt_token:
             raise HTTPException(status_code=500, detail="Inferrix API token not configured")
         
+        import requests
         headers = {"X-Authorization": f"Bearer {jwt_token}"}
         response = requests.get(
             "https://cloud.inferrix.com/api/user/devices",
@@ -303,6 +243,7 @@ def inferrix_api_status():
         "Content-Type": "application/json"
     }
     try:
+        import requests
         response = requests.get(url, headers=headers, timeout=5)
         response.raise_for_status()
         data = response.json().get("data", [])
@@ -320,7 +261,7 @@ def api_root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
-        "database_available": DATABASE_AVAILABLE
+        "database_available": False
     }
 
 @app.get("/health")
@@ -332,7 +273,7 @@ def health():
             "status": "✅ FastAPI server is running", 
             "timestamp": time.time(),
             "version": "1.0.0",
-            "database_available": DATABASE_AVAILABLE
+            "database_available": False
         }
     except Exception as e:
         return JSONResponse(
@@ -380,6 +321,7 @@ def debug_devices(current_user=Depends(get_current_user)):
         if not jwt_token:
             raise HTTPException(status_code=500, detail="Inferrix API token not configured")
         
+        import requests
         headers = {"X-Authorization": f"Bearer {jwt_token}"}
         response = requests.get(
             "https://cloud.inferrix.com/api/user/devices",
