@@ -21,7 +21,7 @@ if command -v node &> /dev/null && command -v npm &> /dev/null; then
     
     # Install frontend dependencies
     cd frontend
-    npm install
+    npm install --production=false
     
     # Build frontend
     npm run build
@@ -32,6 +32,7 @@ if command -v node &> /dev/null && command -v npm &> /dev/null; then
         mkdir -p static
         cp -r frontend/dist/* static/
         echo "✅ Frontend built and copied to static directory"
+        echo "📄 Static files created in static/ directory"
     else
         echo "⚠️  Frontend build failed, continuing with backend only"
     fi

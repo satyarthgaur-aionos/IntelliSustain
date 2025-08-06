@@ -27,29 +27,30 @@ try:
         # Migrate existing table to add missing columns
         try:
             with engine.connect() as connection:
-                # Check if columns exist first
-                result = connection.execute("""
+                # Check if columns exist first using text() for raw SQL
+                from sqlalchemy import text
+                result = connection.execute(text("""
                     SELECT column_name 
                     FROM information_schema.columns 
                     WHERE table_name = 'users' AND table_schema = 'public'
-                """)
+                """))
                 existing_columns = [row[0] for row in result]
                 
                 print(f"Existing columns: {existing_columns}")
                 
                 # Add is_active column if it doesn't exist
                 if 'is_active' not in existing_columns:
-                    connection.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE")
+                    connection.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE"))
                     print("✅ Added is_active column")
                 
                 # Add role column if it doesn't exist
                 if 'role' not in existing_columns:
-                    connection.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'")
+                    connection.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'"))
                     print("✅ Added role column")
                 
                 # Update existing users with default values
-                connection.execute("UPDATE users SET is_active = TRUE WHERE is_active IS NULL")
-                connection.execute("UPDATE users SET role = 'admin' WHERE role IS NULL")
+                connection.execute(text("UPDATE users SET is_active = TRUE WHERE is_active IS NULL"))
+                connection.execute(text("UPDATE users SET role = 'admin' WHERE role IS NULL"))
                 print("✅ Updated existing users with default values")
                 
                 connection.commit()
