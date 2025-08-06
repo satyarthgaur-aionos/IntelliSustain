@@ -4118,7 +4118,6 @@ class EnhancedAgenticInferrixAgent:
             return f"❌ Failed to set '{matched_key}' for {entity_type} {entity_id}: {resp['error']}"
         else:
             # Don't add °C for fan speed controls
-            print(f"[DEBUG] matched_key: '{matched_key}', value: {value}, type: {type(value)}")
             if 'fan' in matched_key.lower():
                 return f"✅ {matched_key.title()} set to {value} for {location or entity_id}"
             else:
