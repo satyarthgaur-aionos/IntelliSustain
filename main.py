@@ -1,13 +1,81 @@
 import os
 import time
+import sys
 from collections import defaultdict
 from typing import Optional
+
+# Add backend directory to Python path
+sys.path.append('backend')
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+
+# Try to import database components
+try:
+    from database import engine, Base
+    from user_model import User
+    from auth_db import get_password_hash, verify_user, create_access_token
+    
+    # Create database tables on startup
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database tables created successfully")
+        
+        # Create users if they don't exist
+        from database import SessionLocal
+        db = SessionLocal()
+        
+        # Create admin user
+        admin_user = db.query(User).filter(User.email == "admin@inferrix.com").first()
+        if not admin_user:
+            admin_user = User(
+                email="admin@inferrix.com",
+                hashed_password=get_password_hash("admin123"),
+                is_active=True,
+                role="admin"
+            )
+            db.add(admin_user)
+            print("✅ Admin user created")
+        
+        # Create demo user
+        demo_user = db.query(User).filter(User.email == "demo@inferrix.com").first()
+        if not demo_user:
+            demo_user = User(
+                email="demo@inferrix.com",
+                hashed_password=get_password_hash("demo123"),
+                is_active=True,
+                role="user"
+            )
+            db.add(demo_user)
+            print("✅ Demo user created")
+        
+        # Create tech user with existing password hash
+        tech_user = db.query(User).filter(User.email == "tech@intellisustain.com").first()
+        if not tech_user:
+            tech_user = User(
+                email="tech@intellisustain.com",
+                hashed_password="$2b$12$YU4exsnOVpF.9qldXfDhl.n5e22PhRKLGkh9ilbMCFanPoZyToDny",
+                is_active=True,
+                role="admin"
+            )
+            db.add(tech_user)
+            print("✅ Tech user created")
+        
+        db.commit()
+        db.close()
+        print("✅ Database setup completed successfully")
+        
+        DATABASE_AVAILABLE = True
+    except Exception as e:
+        print(f"⚠️  Warning: Could not setup database: {e}")
+        DATABASE_AVAILABLE = False
+        
+except ImportError as e:
+    print(f"⚠️  Warning: Database modules not available: {e}")
+    DATABASE_AVAILABLE = False
 
 app = FastAPI(title="Inferrix AI Agent API", version="1.0.0")
 
@@ -107,17 +175,35 @@ async def serve_frontend():
 @app.post("/login")
 def login(user: User):
     """Authenticate user and return JWT token"""
-    # Demo login for now
-    if user.email == "demo@inferrix.com" and user.password == "demo123":
-        return {"access_token": "demo_token", "token_type": "bearer"}
-    elif user.email == "tech@intellisustain.com" and user.password == "Demo@1234":
-        return {"access_token": "demo_token", "token_type": "bearer"}
+    if DATABASE_AVAILABLE:
+        try:
+            db_user = verify_user(user.email, user.password)
+            if not db_user:
+                raise HTTPException(status_code=401, detail="Invalid credentials")
+            token = create_access_token({"sub": user.email})
+            return {"access_token": token, "token_type": "bearer"}
+        except Exception as e:
+            print(f"Login error: {e}")
+            raise HTTPException(status_code=500, detail="Authentication service unavailable")
     else:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        # Demo login for when database is not available
+        if user.email == "demo@inferrix.com" and user.password == "demo123":
+            return {"access_token": "demo_token", "token_type": "bearer"}
+        elif user.email == "tech@intellisustain.com" and user.password == "Demo@1234":
+            return {"access_token": "demo_token", "token_type": "bearer"}
+        else:
+            raise HTTPException(status_code=401, detail="Invalid credentials")
 
 def get_current_user():
-    """Dummy function for authentication"""
-    return {"email": "demo@inferrix.com"}
+    """Get current user - works with or without database"""
+    if DATABASE_AVAILABLE:
+        try:
+            from auth_db import get_current_user as db_get_current_user
+            return db_get_current_user()
+        except:
+            return {"email": "demo@inferrix.com"}
+    else:
+        return {"email": "demo@inferrix.com"}
 
 @app.post("/chat")
 def chat(prompt: Prompt, current_user=Depends(get_current_user)):
@@ -132,14 +218,24 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
         
-        # Simple demo response
-        response = f"Demo response to: {prompt.query}"
+        # Try to use enhanced agent if available
+        if DATABASE_AVAILABLE:
+            try:
+                from enhanced_agentic_agent import get_enhanced_agentic_agent
+                agent = get_enhanced_agentic_agent()
+                response = agent.process_query(prompt.query, prompt.user, prompt.device or "")
+                if not response:
+                    response = "No data found or unable to answer your query."
+            except:
+                response = f"Demo response to: {prompt.query}"
+        else:
+            response = f"Demo response to: {prompt.query}"
         
         print(f"[DEBUG] Final response: {response[:100]}...")
         
         return {
             "response": response, 
-            "tool": "demo_agent",  # Indicate this is using demo mode
+            "tool": "enhanced_agentic_agent" if DATABASE_AVAILABLE else "demo_agent",
             "timestamp": time.time()
         }
     except Exception as e:
@@ -162,14 +258,24 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
         
-        # Simple demo response
-        response = f"Enhanced demo response to: {prompt.query}"
+        # Try to use enhanced agent if available
+        if DATABASE_AVAILABLE:
+            try:
+                from enhanced_agentic_agent import get_enhanced_agentic_agent
+                agent = get_enhanced_agentic_agent()
+                response = agent.process_query(prompt.query, prompt.user, prompt.device or "")
+                if not response:
+                    response = "No data found or unable to answer your query."
+            except:
+                response = f"Enhanced demo response to: {prompt.query}"
+        else:
+            response = f"Enhanced demo response to: {prompt.query}"
         
         print(f"[DEBUG] Enhanced chat - Final response: {response[:100]}...")
         
         return {
             "response": response, 
-            "tool": "demo_enhanced_agent",  # Indicate this is using demo mode
+            "tool": "enhanced_agentic_agent" if DATABASE_AVAILABLE else "demo_enhanced_agent",
             "timestamp": time.time(),
             "features": [
                 "conversational_memory",
@@ -261,7 +367,7 @@ def api_root():
         "version": "1.0.0",
         "docs": "/docs",
         "health": "/health",
-        "database_available": False
+        "database_available": DATABASE_AVAILABLE
     }
 
 @app.get("/health")
@@ -273,7 +379,7 @@ def health():
             "status": "✅ FastAPI server is running", 
             "timestamp": time.time(),
             "version": "1.0.0",
-            "database_available": False
+            "database_available": DATABASE_AVAILABLE
         }
     except Exception as e:
         return JSONResponse(
