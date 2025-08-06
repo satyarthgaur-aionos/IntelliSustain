@@ -23,6 +23,10 @@ cp -r frontend/dist/* static/
 echo "🗄️ Setting up database..."
 python setup_admin.py
 
+# Migrate existing users
+echo "🔄 Migrating users..."
+python migrate_users.py
+
 # Start FastAPI server
 echo "🚀 Starting FastAPI server..."
 uvicorn main:app --host 0.0.0.0 --port $PORT 
