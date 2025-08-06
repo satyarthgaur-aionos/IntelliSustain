@@ -19,9 +19,14 @@ try:
     from user_model import User
     from auth_db import get_password_hash, verify_user, create_access_token
     
-    # Create database tables on startup
-    try:
-        Base.metadata.create_all(bind=engine)
+    # Check if database engine is available
+    if engine is None:
+        print("❌ Database engine is not available - DATABASE_URL may be empty")
+        DATABASE_AVAILABLE = False
+    else:
+        # Create database tables on startup
+        try:
+            Base.metadata.create_all(bind=engine)
         print("✅ Database tables created successfully")
         
         # Migrate existing table to add missing columns
