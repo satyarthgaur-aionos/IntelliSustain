@@ -10,7 +10,7 @@ from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 from pydantic import BaseModel
-from enhanced_agentic_agent import enhanced_agentic_agent
+from enhanced_agentic_agent import get_enhanced_agentic_agent
 from auth_db import get_current_user
 
 app = FastAPI(title="Inferrix AI Agent API", version="1.0.0")
@@ -116,10 +116,12 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
             device_context = f" (Device ID: {prompt.device})"
             enhanced_query = prompt.query + device_context
             print(f"[DEBUG] Enhanced query with device: '{enhanced_query}'")
-            response = enhanced_agentic_agent.process_query(enhanced_query, prompt.user, prompt.device)
+            agent = get_enhanced_agentic_agent()
+            response = agent.process_query(enhanced_query, prompt.user, prompt.device)
         else:
             print(f"[DEBUG] No device selected, using original query")
-            response = enhanced_agentic_agent.process_query(prompt.query, prompt.user)
+            agent = get_enhanced_agentic_agent()
+            response = agent.process_query(prompt.query, prompt.user)
         
         # Always return a string
         if not response:
@@ -153,7 +155,8 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - device: '{prompt.device}'")
         
         # Use the enhanced agentic agent with AI magic features
-        response = enhanced_agentic_agent.process_query(prompt.query, prompt.user, prompt.device or "")
+        agent = get_enhanced_agentic_agent()
+        response = agent.process_query(prompt.query, prompt.user, prompt.device or "")
         
         # Always return a string
         if not response:

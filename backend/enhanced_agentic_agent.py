@@ -24,10 +24,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import AI Magic Core
-from ai_magic_core import (
-    conversation_memory, multi_device_processor, proactive_insights,
-    nlp_processor, rich_response, multi_lang, smart_notifications, self_healing
-)
+try:
+    from ai_magic_core import (
+        conversation_memory, multi_device_processor, proactive_insights,
+        nlp_processor, rich_response, multi_lang, smart_notifications, self_healing
+    )
+except ImportError:
+    # Fallback if ai_magic_core is not available
+    conversation_memory = None
+    multi_device_processor = None
+    proactive_insights = None
+    nlp_processor = None
+    rich_response = None
+    multi_lang = None
+    smart_notifications = None
+    self_healing = None
 
 INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
 
@@ -57,6 +68,15 @@ else:
     print("⚠️ No valid AI provider configured - LLM features will be limited")
     client = None
     llm = None
+
+# Initialize the enhanced agentic agent
+enhanced_agentic_agent = None
+
+def get_enhanced_agentic_agent():
+    global enhanced_agentic_agent
+    if enhanced_agentic_agent is None:
+        enhanced_agentic_agent = EnhancedAgenticInferrixAgent()
+    return enhanced_agentic_agent
 
 
 def normalize_location_name(text):
