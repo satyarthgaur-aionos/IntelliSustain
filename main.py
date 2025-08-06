@@ -24,6 +24,38 @@ try:
         Base.metadata.create_all(bind=engine)
         print("✅ Database tables created successfully")
         
+        # Migrate existing table to add missing columns
+        try:
+            with engine.connect() as connection:
+                # Check if columns exist first
+                result = connection.execute("""
+                    SELECT column_name 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'users' AND table_schema = 'public'
+                """)
+                existing_columns = [row[0] for row in result]
+                
+                print(f"Existing columns: {existing_columns}")
+                
+                # Add is_active column if it doesn't exist
+                if 'is_active' not in existing_columns:
+                    connection.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT TRUE")
+                    print("✅ Added is_active column")
+                
+                # Add role column if it doesn't exist
+                if 'role' not in existing_columns:
+                    connection.execute("ALTER TABLE users ADD COLUMN role VARCHAR DEFAULT 'user'")
+                    print("✅ Added role column")
+                
+                # Update existing users with default values
+                connection.execute("UPDATE users SET is_active = TRUE WHERE is_active IS NULL")
+                connection.execute("UPDATE users SET role = 'admin' WHERE role IS NULL")
+                print("✅ Updated existing users with default values")
+                
+                connection.commit()
+        except Exception as e:
+            print(f"⚠️  Warning: Could not migrate table: {e}")
+        
         # Create users if they don't exist
         from database import SessionLocal
         db = SessionLocal()
