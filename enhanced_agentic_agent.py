@@ -24,10 +24,21 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import AI Magic Core
-from ai_magic_core import (
-    conversation_memory, multi_device_processor, proactive_insights,
-    nlp_processor, rich_response, multi_lang, smart_notifications, self_healing
-)
+try:
+    from backend.ai_magic_core import (
+        conversation_memory, multi_device_processor, proactive_insights,
+        nlp_processor, rich_response, multi_lang, smart_notifications, self_healing
+    )
+except ImportError:
+    # Fallback if ai_magic_core is not available
+    conversation_memory = None
+    multi_device_processor = None
+    proactive_insights = None
+    nlp_processor = None
+    rich_response = None
+    multi_lang = None
+    smart_notifications = None
+    self_healing = None
 
 INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
 

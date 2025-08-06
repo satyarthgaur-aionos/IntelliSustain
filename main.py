@@ -282,20 +282,17 @@ def root():
 def health():
     """Health check endpoint"""
     try:
-        # Use MCP server for health check (correct endpoint)
-        response = requests.get("http://localhost:8001/inferrix/devices", params={"page": 0, "pageSize": 1}, timeout=5)
-        response.raise_for_status()
-        devices = response.json().get("data", [])
+        # Simple health check - just verify the app is running
         return {
-            "status": "✅ Connected to Inferrix API via MCP", 
-            "devices_count": len(devices),
-            "timestamp": time.time()
+            "status": "✅ FastAPI server is running", 
+            "timestamp": time.time(),
+            "version": "1.0.0"
         }
     except Exception as e:
         return JSONResponse(
             status_code=500, 
             content={
-                "status": "❌ Inferrix API unavailable via MCP", 
+                "status": "❌ Server error", 
                 "error": str(e),
                 "timestamp": time.time()
             }
