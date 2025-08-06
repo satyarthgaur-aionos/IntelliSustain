@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IntelliSustain Logo Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .logo-preview {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+        }
+        .logo-preview img {
+            max-width: 100%;
+            height: auto;
+        }
+        .download-btn {
+            background: #2563eb;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .download-btn:hover {
+            background: #1d4ed8;
+        }
+        .info {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 IntelliSustain Logo</h1>
+        
+        <div class="info">
+            <h3>Logo Design Elements:</h3>
+            <ul>
+                <li><strong>Brain Symbol:</strong> Represents AI/Intelligence</li>
+                <li><strong>Leaf Symbol:</strong> Represents Sustainability</li>
+                <li><strong>Building Symbol:</strong> Represents Facility Management</li>
+                <li><strong>Blue Gradient:</strong> Professional, trustworthy</li>
+                <li><strong>Green Accent:</strong> Environmental focus</li>
+            </ul>
+        </div>
+
+        <div class="logo-preview">
+            <h3>Logo Preview:</h3>
+            <img src="intellisustain-logo.svg" alt="IntelliSustain Logo" id="logoImage">
+        </div>
+
+        <div style="text-align: center;">
+            <button class="download-btn" onclick="downloadPNG()">Download PNG Logo</button>
+            <button class="download-btn" onclick="downloadSVG()">Download SVG Logo</button>
+        </div>
+
+        <div class="info">
+            <h3>Usage Instructions:</h3>
+            <ol>
+                <li>Click "Download PNG Logo" to get the PNG version</li>
+                <li>Save the file as "intellisustain-logo.png" in the frontend/public folder</li>
+                <li>The logo will automatically appear in the UI</li>
+                <li>For best quality, use the SVG version for web applications</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function downloadPNG() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = document.getElementById('logoImage');
+            
+            canvas.width = 300;
+            canvas.height = 80;
+            
+            // Wait for image to load
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, 300, 80);
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.download = 'intellisustain-logo.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            
+            // Trigger load if already loaded
+            if (img.complete) {
+                img.onload();
+            }
+        }
+
+        function downloadSVG() {
+            const link = document.createElement('a');
+            link.download = 'intellisustain-logo.svg';
+            link.href = 'intellisustain-logo.svg';
+            link.click();
+        }
+    </script>
+</body>
+</html> 
