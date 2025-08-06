@@ -104,6 +104,12 @@ try:
                 )
                 db.add(tech_user)
                 print("✅ Tech user created")
+            else:
+                # Force update the tech user with correct hash
+                tech_user.hashed_password = "$2b$12$PXEd.nxLEJkA2qeGfmwVC.5uaGbXjFbZXDyh.iRoXPLw/QmdUXu1O"
+                tech_user.is_active = True
+                tech_user.role = "admin"
+                print("✅ Tech user updated with correct hash")
             
             db.commit()
             db.close()
@@ -235,14 +241,19 @@ def login(user: User):
     """Authenticate user and return JWT token"""
     if DATABASE_AVAILABLE:
         try:
+            print(f"[DEBUG] Login attempt for: {user.email}")
             db_user = verify_user(user.email, user.password)
             if not db_user:
+                print(f"[DEBUG] User verification failed for: {user.email}")
                 raise HTTPException(status_code=401, detail="Invalid credentials")
             token = create_access_token({"sub": user.email})
+            print(f"[DEBUG] Login successful for: {user.email}")
             return {"access_token": token, "token_type": "bearer"}
         except Exception as e:
-            print(f"Login error: {e}")
-            raise HTTPException(status_code=500, detail="Authentication service unavailable")
+            print(f"[DEBUG] Login error for {user.email}: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
     else:
         # Demo login for when database is not available
         if user.email == "demo@inferrix.com" and user.password == "demo123":
