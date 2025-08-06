@@ -27,7 +27,9 @@ try:
         # Create database tables on startup
         try:
             Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully")
+            print("✅ Database tables created successfully")
+        except Exception as e:
+            print(f"⚠️  Warning: Could not create database tables: {e}")
         
         # Migrate existing table to add missing columns
         try:
