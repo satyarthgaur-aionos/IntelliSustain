@@ -28,7 +28,36 @@ INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8000")
 
 def get_inferrix_token():
+    """Get current Inferrix access token using refresh token from localStorage"""
+    # For now, fallback to environment variable if refresh token mechanism not implemented
+    # TODO: Implement dynamic token refresh mechanism
     return os.getenv("INFERRIX_API_TOKEN", "").strip()
+
+def get_inferrix_token_dynamic():
+    """Get fresh Inferrix access token using refresh token from localStorage"""
+    # This would be called from frontend with stored refresh token
+    # For now, return the static token
+    return os.getenv("INFERRIX_API_TOKEN", "").strip()
+
+def get_inferrix_access_token(refresh_token):
+    """Get fresh access token using refresh token"""
+    try:
+        response = requests.post(
+            "https://cloud.inferrix.com/api/auth/refresh",
+            json={"refreshToken": refresh_token},
+            headers={"Content-Type": "application/json"},
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("token")
+        else:
+            print(f"Error refreshing token: {response.status_code}")
+            return None
+    except Exception as e:
+        print(f"Exception refreshing token: {e}")
+        return None
 
 def fetch_alarms_from_mcp():
     """Fetch active alarms from integrated MCP endpoints"""

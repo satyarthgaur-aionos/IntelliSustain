@@ -9,6 +9,10 @@ jwt token expiry 9000 seconds=150 mins
 
 refresh token expiry 604800 seconds
 
+Longer timeouts (45 seconds instead of 15)
+Retry logic (3 attempts per request)
+
+
 /api/user/devices
 https://cloud.inferrix.com/api/user/devices?page=0&pageSize=10
 

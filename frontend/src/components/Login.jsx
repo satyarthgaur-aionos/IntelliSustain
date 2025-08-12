@@ -23,7 +23,19 @@ export default function Login({ onLoginSuccess }) {
 
       console.log("Login response:", res.data); // Debug log
       const token = res.data.access_token;
+      const inferrixRefreshToken = res.data.inferrix_refresh_token;
+      const inferrixAccessToken = res.data.inferrix_access_token;
+      
       localStorage.setItem("jwt", token);
+      if (inferrixRefreshToken) {
+        localStorage.setItem("inferrix_refresh_token", inferrixRefreshToken);
+        console.log("Inferrix refresh token stored in localStorage");
+      }
+      if (inferrixAccessToken) {
+        localStorage.setItem("inferrix_access_token", inferrixAccessToken);
+        console.log("Inferrix access token stored in localStorage");
+      }
+      
       console.log("JWT set in localStorage:", localStorage.getItem("jwt")); // Debug log
       onLoginSuccess(token); // Pass the real JWT up to App
     } catch (err) {

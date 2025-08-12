@@ -88,13 +88,53 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 # === Endpoints ===
 @app.post("/login")
 def login(user: User):
-    """Authenticate user and return JWT token"""
+    """Authenticate user and return JWT token + Inferrix refresh token"""
     from auth_db import verify_user, create_access_token
+    
+    # First authenticate with local database
     db_user = verify_user(user.email, user.password)
     if not db_user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Create local JWT token
     token = create_access_token({"sub": user.email})
-    return {"access_token": token, "token_type": "bearer"}
+    
+    # Now authenticate with Inferrix API to get refresh token
+    try:
+        inferrix_login_data = {
+            "username": "satyarth.gaur@aionos.ai",
+            "password": "Satya2025#"
+        }
+        
+        inferrix_response = requests.post(
+            "https://cloud.inferrix.com/api/auth/login",
+            json=inferrix_login_data,
+            headers={"Content-Type": "application/json"},
+            timeout=30
+        )
+        
+        if inferrix_response.status_code == 200:
+            inferrix_data = inferrix_response.json()
+            refresh_token = inferrix_data.get("refreshToken")
+            access_token = inferrix_data.get("token")
+            
+            if refresh_token and access_token:
+                return {
+                    "access_token": token, 
+                    "token_type": "bearer",
+                    "inferrix_refresh_token": refresh_token,
+                    "inferrix_access_token": access_token
+                }
+            else:
+                print("Warning: No refresh token or access token in Inferrix response")
+                return {"access_token": token, "token_type": "bearer"}
+        else:
+            print(f"Warning: Inferrix login failed with status {inferrix_response.status_code}")
+            return {"access_token": token, "token_type": "bearer"}
+            
+    except Exception as e:
+        print(f"Warning: Error getting Inferrix refresh token: {e}")
+        return {"access_token": token, "token_type": "bearer"}
 
 @app.post("/chat")
 def chat(prompt: Prompt, current_user=Depends(get_current_user)):
@@ -140,6 +180,65 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
             content={"error": str(e), "code": "CHAT_ERROR"}, 
             status_code=500
         )
+
+@app.post("/inferrix/refresh-token")
+def refresh_inferrix_token(request: dict):
+    """Refresh Inferrix access token using refresh token"""
+    refresh_token = request.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=400, detail="refresh_token is required")
+    try:
+        response = requests.post(
+            "https://cloud.inferrix.com/api/auth/refresh",
+            json={"refreshToken": refresh_token},
+            headers={"Content-Type": "application/json"},
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return {
+                "access_token": data.get("token"),
+                "refresh_token": data.get("refreshToken"),  # New refresh token
+                "success": True
+            }
+        else:
+            # If refresh fails, try to re-login
+            print(f"Refresh failed with status {response.status_code}, attempting re-login")
+            try:
+                inferrix_login_data = {
+                    "username": "satyarth.gaur@aionos.ai",
+                    "password": "Satya2025#"
+                }
+                
+                login_response = requests.post(
+                    "https://cloud.inferrix.com/api/auth/login",
+                    json=inferrix_login_data,
+                    headers={"Content-Type": "application/json"},
+                    timeout=30
+                )
+                
+                if login_response.status_code == 200:
+                    login_result = login_response.json()
+                    return {
+                        "access_token": login_result.get("token"),
+                        "refresh_token": login_result.get("refreshToken"),
+                        "success": True,
+                        "method": "re-login"
+                    }
+                else:
+                    raise HTTPException(
+                        status_code=login_response.status_code,
+                        detail=f"Re-login failed: {login_response.status_code}: {login_response.text}"
+                    )
+            except Exception as login_error:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Both refresh and re-login failed: {str(login_error)}"
+                )
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error refreshing token: {str(e)}")
 
 @app.post("/chat/enhanced")
 def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
