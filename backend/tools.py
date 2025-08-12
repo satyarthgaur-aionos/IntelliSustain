@@ -28,16 +28,14 @@ INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8000")
 
 def get_inferrix_token():
-    """Get current Inferrix access token using refresh token from localStorage"""
-    # For now, fallback to environment variable if refresh token mechanism not implemented
-    # TODO: Implement dynamic token refresh mechanism
-    return os.getenv("INFERRIX_API_TOKEN", "").strip()
+    """Get fresh Inferrix API token - this function is deprecated since we now use localStorage tokens"""
+    print("[DEBUG] get_inferrix_token() called - this function is deprecated")
+    print("[DEBUG] Tokens should be obtained from localStorage in the frontend")
+    return ""
 
 def get_inferrix_token_dynamic():
-    """Get fresh Inferrix access token using refresh token from localStorage"""
-    # This would be called from frontend with stored refresh token
-    # For now, return the static token
-    return os.getenv("INFERRIX_API_TOKEN", "").strip()
+    """Get fresh Inferrix API token dynamically"""
+    return get_inferrix_token()
 
 def get_inferrix_access_token(refresh_token):
     """Get fresh access token using refresh token"""
@@ -1048,13 +1046,11 @@ def get_notifications_inferrix(jwt_token):
     resp.raise_for_status()
     return resp.json()["data"]
 
-import os
 import requests
 
-INFERRIX_API_TOKEN = os.getenv("INFERRIX_API_TOKEN")
 INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
 
-def write_device_telemetry(entity_type, entity_id, scope, telemetry_dict):
+def write_device_telemetry(entity_type, entity_id, scope, telemetry_dict, token=None):
     """
     Write (save/update) telemetry data to a device point using Inferrix API.
     Args:
@@ -1062,11 +1058,15 @@ def write_device_telemetry(entity_type, entity_id, scope, telemetry_dict):
         entity_id (str): device UUID
         scope (str): e.g., 'timeseries'
         telemetry_dict (dict): key-value pairs to write
+        token (str): Inferrix API token (optional, for backward compatibility)
     Returns:
         dict: API response or error
     """
+    if not token:
+        return {"error": "No token provided. This function requires a valid Inferrix API token."}
+    
     url = f"{INFERRIX_BASE_URL}/plugins/telemetry/{entity_type}/{entity_id}/timeseries/{scope}"
-    headers = {"X-Authorization": f"Bearer {INFERRIX_API_TOKEN}", "Content-Type": "application/json"}
+    headers = {"X-Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     try:
         resp = requests.post(url, headers=headers, json=telemetry_dict, timeout=10)
         resp.raise_for_status()

@@ -327,6 +327,7 @@ export default function Chat({ devices, selectedDeviceId, onSelectDevice, onLogo
           ? 'http://localhost:8000' 
           : '';
         
+        const inferrixToken = localStorage.getItem("inferrix_token");
         const res = await axios.post(
           `${baseURL}/chat/enhanced`,
         {
@@ -334,7 +335,12 @@ export default function Chat({ devices, selectedDeviceId, onSelectDevice, onLogo
           user: userEmail, // dynamically extracted user email
           device: selectedDeviceId || null
         },
-        { headers: { Authorization: "Bearer " + jwt } }
+        { 
+          headers: { 
+            Authorization: "Bearer " + jwt,
+            "X-Inferrix-Token": inferrixToken || ""
+          } 
+        }
       );
       setMessages((msgs) => [...msgs, { sender: "AI", text: res.data.response }]);
       setQuery("");

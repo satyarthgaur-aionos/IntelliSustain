@@ -163,8 +163,12 @@ export default function VoiceChat() {
     async function fetchDevices() {
       try {
         const jwt = localStorage.getItem("jwt");
+        const inferrixToken = localStorage.getItem("inferrix_token");
         const res = await axios.get(`${baseURL}/inferrix/devices`, {
-          headers: { Authorization: "Bearer " + jwt }
+          headers: { 
+            Authorization: "Bearer " + jwt,
+            "X-Inferrix-Token": inferrixToken
+          }
         });
         setDeviceList(res.data.devices || []);
       } catch (e) {
@@ -214,6 +218,7 @@ export default function VoiceChat() {
     
     try {
       const jwt = localStorage.getItem("jwt");
+      const inferrixToken = localStorage.getItem("inferrix_token");
       if (!jwt) {
         throw new Error("No authentication token found");
       }
@@ -230,6 +235,7 @@ export default function VoiceChat() {
         {
           headers: {
             Authorization: "Bearer " + jwt,
+            "X-Inferrix-Token": inferrixToken
           },
           signal: controller.signal
         }

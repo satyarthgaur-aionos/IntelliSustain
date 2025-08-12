@@ -149,12 +149,11 @@ def normalize_location_name(text):
     print(f"[DEBUG] normalize_location_name: '{text}' -> '{canonical}'")
     return canonical
 
-# Get Inferrix API token
+# Get Inferrix API token - this function is deprecated since we now use localStorage tokens
 def get_inferrix_token():
-    import os
-    token = os.getenv("INFERRIX_API_TOKEN", "").strip()
-    print("[DEBUG] INFERRIX_API_TOKEN being used:", repr(token))
-    return token
+    print("[DEBUG] get_inferrix_token() called - this function is deprecated")
+    print("[DEBUG] Tokens should be obtained from localStorage in the frontend")
+    return ""
 
 # Enhanced API endpoints based on user requirements
 ENHANCED_API_ENDPOINTS = {
@@ -983,7 +982,14 @@ class EnhancedAgenticInferrixAgent:
             }
         ]
     
-    def process_query(self, user_query: str, user: str = "User", device: str = "") -> str:
+    def set_api_token(self, token: str):
+        """Set the API token for this agent instance"""
+        self._api_token = token
+    
+    def process_query(self, user_query: str, user: str = "User", device: str = "", token: str = None) -> str:
+        # Set the token if provided
+        if token:
+            self.set_api_token(token)
         # PATCH: Battery status direct handling (handle 'low battery' and similar queries FIRST)
         battery_keywords_direct = ['low battery', 'devices with low battery', 'show low battery', 'battery status', 'battery level']
         if any(word in user_query.lower() for word in battery_keywords_direct):
@@ -1028,7 +1034,7 @@ class EnhancedAgenticInferrixAgent:
             if not is_valid:
                 return validation_message
             
-            result = self._send_control_command('DEVICE', device_id, 'room temperature setpoint', new_setpoint, location_phrase)
+            result = self._send_control_command('DEVICE', device_id, 'room temperature setpoint', new_setpoint, location_phrase, token)
             return result
 
         # Initialize temperature setpoint match variable
@@ -1106,7 +1112,7 @@ class EnhancedAgenticInferrixAgent:
                 return validation_message
             
             # Try to set the temperature setpoint
-            result = self._send_control_command('DEVICE', device_id, 'room temperature setpoint', value, location_phrase)
+            result = self._send_control_command('DEVICE', device_id, 'room temperature setpoint', value, location_phrase, token)
             return result
 
         # --- Enhanced Hindi/Hinglish regex patterns for fan speed ---
@@ -1155,7 +1161,7 @@ class EnhancedAgenticInferrixAgent:
                 if not device_id:
                     return f"❌ Unable to find a device for '{location_phrase or user_query}'. Please check the room/device name."
                 # Set the fan speed
-                result = self._send_control_command('DEVICE', device_id, 'set fan speed', value, location_phrase)
+                result = self._send_control_command('DEVICE', device_id, 'set fan speed', value, location_phrase, token)
                 return result
         # Enhanced fan speed patterns including "increase" commands
         fan_speed_patterns = [
@@ -1242,7 +1248,7 @@ class EnhancedAgenticInferrixAgent:
                 if not device_id:
                     return f"❌ Unable to find a device for '{location_phrase}'. Please check the room/device name."
             
-            result = self._send_control_command('DEVICE', device_id, 'set fan speed', value, location_phrase)
+            result = self._send_control_command('DEVICE', device_id, 'set fan speed', value, location_phrase, token)
             return result
         # --- Enhanced Hindi/Hinglish regex patterns for temperature queries ---
         hindi_temp_patterns = [
@@ -2455,10 +2461,15 @@ class EnhancedAgenticInferrixAgent:
         print(f"[DEBUG] No match found. No devices available.")
         raise Exception(f"❌ No device found for '{device_name}'. No devices available in the system.")
     
-    def _make_api_request(self, endpoint: str, method: str = "GET", data: Optional[Dict] = None) -> Dict:
+    def _make_api_request(self, endpoint: str, method: str = "GET", data: Optional[Dict] = None, token: str = None) -> Dict:
         """Make API request to Inferrix"""
+        # Use provided token or fall back to class token
+        api_token = token or getattr(self, '_api_token', None)
+        if not api_token:
+            return {"error": "No token provided", "message": "API token is required", "suggestion": "Please log in again"}
+        
         url = f"{INFERRIX_BASE_URL}/{endpoint}"
-        headers = {"X-Authorization": f"Bearer {get_inferrix_token()}"}
+        headers = {"X-Authorization": f"Bearer {api_token}"}
         try:
             if method == "GET":
                 response = requests.get(url, headers=headers, params=data, timeout=10)
@@ -4078,7 +4089,7 @@ class EnhancedAgenticInferrixAgent:
         except (ValueError, TypeError):
             return False, f"❌ Invalid temperature value: {temperature_value}. Please provide a valid number."
 
-    def _send_control_command(self, entity_type, entity_id, desired_key, value, location=None):
+    def _send_control_command(self, entity_type, entity_id, desired_key, value, location=None, token=None):
         # Always fetch available telemetry keys before sending control command
         keys_endpoint = f"plugins/telemetry/{entity_type}/{entity_id}/keys/timeseries"
         keys = self._make_api_request(keys_endpoint)
@@ -4113,7 +4124,7 @@ class EnhancedAgenticInferrixAgent:
         
         telemetry_data = {matched_key: value}
         from tools import write_device_telemetry
-        resp = write_device_telemetry(entity_type, entity_id, 'ANY', telemetry_data)
+        resp = write_device_telemetry(entity_type, entity_id, 'ANY', telemetry_data, token)
         if resp.get('error'):
             return f"❌ Failed to set '{matched_key}' for {entity_type} {entity_id}: {resp['error']}"
         else:
@@ -5077,7 +5088,7 @@ class EnhancedAgenticInferrixAgent:
             if isinstance(device_id, dict):
                 device_id = device_id.get('id', '')
             if device_id:
-                result = self._send_control_command('DEVICE', device_id, 'room temperature setpoint', parameter, device.get('name', ''))
+                result = self._send_control_command('DEVICE', device_id, 'room temperature setpoint', parameter, device.get('name', ''), token)
                 results.append([device.get('name', '-'), device.get('location', '-'), parameter, result if isinstance(result, str) else 'OK'])
         if not results:
             return f"❌ No devices matched the action '{action}'."

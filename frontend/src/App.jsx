@@ -10,25 +10,41 @@ function App() {
 
   useEffect(() => {
     const jwt = localStorage.getItem("jwt");
-    if (jwt) {
+    const inferrixToken = localStorage.getItem("inferrix_token");
+    if (jwt && inferrixToken) {
       setIsAuthenticated(true);
-      fetch('/inferrix/devices')
+      fetch('/inferrix/devices', {
+        headers: {
+          'Authorization': `Bearer ${jwt}`,
+          'X-Inferrix-Token': inferrixToken
+        }
+      })
         .then(res => res.json())
-        .then(data => setDevices(data.devices || []));
+        .then(data => setDevices(data.devices || []))
+        .catch(error => console.error('Error fetching devices:', error));
     }
   }, []);
 
   // Update handleLogin to accept the token argument
   const handleLogin = (token) => {
     setIsAuthenticated(true);
-    // Optionally, store the token if needed
-    fetch('/inferrix/devices')
+    const inferrixToken = localStorage.getItem("inferrix_token");
+    // Fetch devices with proper authentication
+    fetch('/inferrix/devices', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Inferrix-Token': inferrixToken
+      }
+    })
       .then(res => res.json())
-      .then(data => setDevices(data.devices || []));
+      .then(data => setDevices(data.devices || []))
+      .catch(error => console.error('Error fetching devices:', error));
   };
 
   const handleLogout = () => {
+    // Clear all tokens from localStorage
     localStorage.removeItem("jwt");
+    localStorage.removeItem("inferrix_token");
     setIsAuthenticated(false);
     setDevices([]);
     setSelectedDeviceId("");

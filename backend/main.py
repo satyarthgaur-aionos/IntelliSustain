@@ -1,4 +1,4 @@
-import dotenv
+﻿import dotenv
 import requests
 import os
 import time
@@ -88,7 +88,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 # === Endpoints ===
 @app.post("/login")
 def login(user: User):
-    """Authenticate user and return JWT token + Inferrix refresh token"""
+    """Authenticate user and return JWT token + Inferrix token"""
     from auth_db import verify_user, create_access_token
     
     # First authenticate with local database
@@ -99,11 +99,11 @@ def login(user: User):
     # Create local JWT token
     token = create_access_token({"sub": user.email})
     
-    # Now authenticate with Inferrix API to get refresh token
+    # Now authenticate with Inferrix API using the same credentials
     try:
         inferrix_login_data = {
-            "username": "satyarth.gaur@aionos.ai",
-            "password": "Satya2025#"
+            "username": user.email,  # Use the same email from local login
+            "password": user.password  # Use the same password from local login
         }
         
         inferrix_response = requests.post(
@@ -115,18 +115,16 @@ def login(user: User):
         
         if inferrix_response.status_code == 200:
             inferrix_data = inferrix_response.json()
-            refresh_token = inferrix_data.get("refreshToken")
-            access_token = inferrix_data.get("token")
+            inferrix_token = inferrix_data.get("token")
             
-            if refresh_token and access_token:
+            if inferrix_token:
                 return {
                     "access_token": token, 
                     "token_type": "bearer",
-                    "inferrix_refresh_token": refresh_token,
-                    "inferrix_access_token": access_token
+                    "inferrix_token": inferrix_token
                 }
             else:
-                print("Warning: No refresh token or access token in Inferrix response")
+                print("Warning: No token in Inferrix response")
                 return {"access_token": token, "token_type": "bearer"}
         else:
             print(f"Warning: Inferrix login failed with status {inferrix_response.status_code}")
@@ -137,7 +135,7 @@ def login(user: User):
         return {"access_token": token, "token_type": "bearer"}
 
 @app.post("/chat")
-def chat(prompt: Prompt, current_user=Depends(get_current_user)):
+def chat(prompt: Prompt, request: Request, current_user=Depends(get_current_user)):
     """Process chat query through AI agent using agentic approach"""
     try:
         if not prompt.query.strip():
@@ -149,6 +147,12 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
         
+        # Get the Inferrix token from the request headers
+        inferrix_token = None
+        auth_header = request.headers.get("X-Inferrix-Token")
+        if auth_header:
+            inferrix_token = auth_header
+        
         # Use the enhanced agentic agent
         # Pass device information if available
         if prompt.device:
@@ -157,11 +161,11 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
             enhanced_query = prompt.query + device_context
             print(f"[DEBUG] Enhanced query with device: '{enhanced_query}'")
             agent = get_enhanced_agentic_agent()
-            response = agent.process_query(enhanced_query, prompt.user, prompt.device)
+            response = agent.process_query(enhanced_query, prompt.user, prompt.device, inferrix_token)
         else:
             print(f"[DEBUG] No device selected, using original query")
             agent = get_enhanced_agentic_agent()
-            response = agent.process_query(prompt.query, prompt.user)
+            response = agent.process_query(prompt.query, prompt.user, "", inferrix_token)
         
         # Always return a string
         if not response:
@@ -181,67 +185,10 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
             status_code=500
         )
 
-@app.post("/inferrix/refresh-token")
-def refresh_inferrix_token(request: dict):
-    """Refresh Inferrix access token using refresh token"""
-    refresh_token = request.get("refresh_token")
-    if not refresh_token:
-        raise HTTPException(status_code=400, detail="refresh_token is required")
-    try:
-        response = requests.post(
-            "https://cloud.inferrix.com/api/auth/refresh",
-            json={"refreshToken": refresh_token},
-            headers={"Content-Type": "application/json"},
-            timeout=30
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            return {
-                "access_token": data.get("token"),
-                "refresh_token": data.get("refreshToken"),  # New refresh token
-                "success": True
-            }
-        else:
-            # If refresh fails, try to re-login
-            print(f"Refresh failed with status {response.status_code}, attempting re-login")
-            try:
-                inferrix_login_data = {
-                    "username": "satyarth.gaur@aionos.ai",
-                    "password": "Satya2025#"
-                }
-                
-                login_response = requests.post(
-                    "https://cloud.inferrix.com/api/auth/login",
-                    json=inferrix_login_data,
-                    headers={"Content-Type": "application/json"},
-                    timeout=30
-                )
-                
-                if login_response.status_code == 200:
-                    login_result = login_response.json()
-                    return {
-                        "access_token": login_result.get("token"),
-                        "refresh_token": login_result.get("refreshToken"),
-                        "success": True,
-                        "method": "re-login"
-                    }
-                else:
-                    raise HTTPException(
-                        status_code=login_response.status_code,
-                        detail=f"Re-login failed: {login_response.status_code}: {login_response.text}"
-                    )
-            except Exception as login_error:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Both refresh and re-login failed: {str(login_error)}"
-                )
-            
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error refreshing token: {str(e)}")
+# Removed complex refresh token endpoint - using simple token approach
 
 @app.post("/chat/enhanced")
-def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
+def enhanced_chat(prompt: Prompt, request: Request, current_user=Depends(get_current_user)):
     """Process chat query through enhanced AI agent with AI magic features"""
     try:
         if not prompt.query.strip():
@@ -253,9 +200,18 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
         
+        # Get the Inferrix token from the request headers
+        inferrix_token = None
+        auth_header = request.headers.get("X-Inferrix-Token")
+        if auth_header:
+            inferrix_token = auth_header
+            print(f"[DEBUG] Enhanced chat - Token received: {inferrix_token[:50]}...")
+        else:
+            print("[DEBUG] Enhanced chat - No X-Inferrix-Token header found")
+        
         # Use the enhanced agentic agent with AI magic features
         agent = get_enhanced_agentic_agent()
-        response = agent.process_query(prompt.query, prompt.user, prompt.device or "")
+        response = agent.process_query(prompt.query, prompt.user, prompt.device or "", inferrix_token)
         
         # Always return a string
         if not response:
@@ -287,34 +243,36 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
         )
 
 @app.get("/inferrix/alarms")
-def get_alarms(current_user=Depends(get_current_user)):
+def get_alarms(request: Request, current_user=Depends(get_current_user)):
     """Get alarms from Inferrix API"""
     try:
-        jwt_token = os.getenv("INFERRIX_API_TOKEN")
-        if not jwt_token:
-            raise HTTPException(status_code=500, detail="Inferrix API token not configured")
+        # Get the Inferrix token from the request headers
+        inferrix_token = request.headers.get("X-Inferrix-Token")
+        if not inferrix_token:
+            raise HTTPException(status_code=401, detail="Inferrix API token required. Please log in again.")
         
-        headers = {"X-Authorization": f"Bearer {jwt_token}"}
+        headers = {"X-Authorization": f"Bearer {inferrix_token}"}
         response = requests.get(
-            "https://cloud.inferrix.com/api/alarms",
+            "https://cloud.inferrix.com/api/v2/alarms",
             headers=headers,
-            params={"page": 0, "pageSize": 100}
+            params={"pageSize": 100, "page": 0, "sortProperty": "createdTime", "sortOrder": "DESC", "statusList": "ACTIVE"}
         )
         response.raise_for_status()
         
         return {"data": response.json().get("data", [])}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch alarms: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Inferrix API call failed: {str(e)}")
 
 @app.get("/inferrix/devices")
-def get_devices(current_user=Depends(get_current_user)):
+def get_devices(request: Request, current_user=Depends(get_current_user)):
     """Get devices from Inferrix API"""
     try:
-        jwt_token = os.getenv("INFERRIX_API_TOKEN")
-        if not jwt_token:
-            raise HTTPException(status_code=500, detail="Inferrix API token not configured")
+        # Get the Inferrix token from the request headers
+        inferrix_token = request.headers.get("X-Inferrix-Token")
+        if not inferrix_token:
+            raise HTTPException(status_code=401, detail="Inferrix API token required. Please log in again.")
         
-        headers = {"X-Authorization": f"Bearer {jwt_token}"}
+        headers = {"X-Authorization": f"Bearer {inferrix_token}"}
         response = requests.get(
             "https://cloud.inferrix.com/api/user/devices",
             headers=headers,
@@ -324,7 +282,7 @@ def get_devices(current_user=Depends(get_current_user)):
         
         return {"devices": response.json().get("data", [])}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch devices: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Inferrix API call failed: {str(e)}")
 
 INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
 INFERRIX_API_TOKEN = os.getenv("INFERRIX_API_TOKEN", "").strip()
@@ -360,7 +318,7 @@ def root():
         <html>
         <head><title>Inferrix AI Agent Backend</title></head>
         <body style='font-family:sans-serif; background:#f8fafc; color:#222; text-align:center; padding-top:60px;'>
-            <h1>🚦 Inferrix AI Agent Backend is Running</h1>
+            <h1>ðŸš¦ Inferrix AI Agent Backend is Running</h1>
             <p style='color:#e53e3e; font-size:1.2em;'>
                 <b>Warning:</b> Inferrix API is currently <b>unreachable</b>.<br/>
                 Please check your API token, network, or Inferrix service status.<br/>
@@ -386,7 +344,7 @@ def health():
         response.raise_for_status()
         devices = response.json().get("data", [])
         return {
-            "status": "✅ Connected to Inferrix API via MCP", 
+            "status": "âœ… Connected to Inferrix API via MCP", 
             "devices_count": len(devices),
             "timestamp": time.time()
         }
@@ -394,7 +352,7 @@ def health():
         return JSONResponse(
             status_code=500, 
             content={
-                "status": "❌ Inferrix API unavailable via MCP", 
+                "status": "âŒ Inferrix API unavailable via MCP", 
                 "error": str(e),
                 "timestamp": time.time()
             }
@@ -471,5 +429,6 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
 
-#   F o r c e   r e d e p l o y  
- 
+# Force redeploy
+
+

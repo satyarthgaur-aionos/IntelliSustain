@@ -4,70 +4,23 @@ const getBaseURL = () => {
     : '';
 };
 
-export const refreshInferrixToken = async () => {
-  try {
-    const refreshToken = localStorage.getItem('inferrix_refresh_token');
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-
-    const baseURL = getBaseURL();
-    const response = await fetch(`${baseURL}/inferrix/refresh-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('jwt')}`
-      },
-      body: JSON.stringify({ refresh_token: refreshToken })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to refresh token: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // Store the new tokens
-    if (data.access_token) {
-      localStorage.setItem('inferrix_access_token', data.access_token);
-    }
-    if (data.refresh_token) {
-      localStorage.setItem('inferrix_refresh_token', data.refresh_token);
-    }
-
-    console.log(`Token refreshed using method: ${data.method || 'refresh'}`);
-    return data.access_token;
-  } catch (error) {
-    console.error('Error refreshing Inferrix token:', error);
-    throw error;
+export const getInferrixToken = () => {
+  // Simply get the token from localStorage
+  const token = localStorage.getItem('inferrix_token');
+  if (!token) {
+    throw new Error('No Inferrix token available. Please log in again.');
   }
-};
-
-export const getInferrixAccessToken = async () => {
-  try {
-    // First try to get the stored access token
-    let accessToken = localStorage.getItem('inferrix_access_token');
-    
-    if (!accessToken) {
-      // If no access token, try to refresh
-      accessToken = await refreshInferrixToken();
-    }
-    
-    return accessToken;
-  } catch (error) {
-    console.error('Error getting Inferrix access token:', error);
-    throw error;
-  }
+  return token;
 };
 
 export const makeInferrixApiCall = async (endpoint, options = {}) => {
   try {
-    let accessToken = await getInferrixAccessToken();
+    const token = getInferrixToken();
     
     const url = `https://cloud.inferrix.com/api${endpoint}`;
     const headers = {
       'Content-Type': 'application/json',
-      'X-Authorization': `Bearer ${accessToken}`,
+      'X-Authorization': `Bearer ${token}`,
       ...options.headers
     };
 
@@ -75,27 +28,6 @@ export const makeInferrixApiCall = async (endpoint, options = {}) => {
       ...options,
       headers
     });
-
-    // If we get a 401, try to refresh the token and retry once
-    if (response.status === 401) {
-      console.log('Token expired, attempting refresh...');
-      accessToken = await refreshInferrixToken();
-      
-      // Retry the request with the new token
-      const retryResponse = await fetch(url, {
-        ...options,
-        headers: {
-          ...headers,
-          'X-Authorization': `Bearer ${accessToken}`
-        }
-      });
-      
-      if (!retryResponse.ok) {
-        throw new Error(`API call failed: ${retryResponse.status} ${retryResponse.statusText}`);
-      }
-      
-      return await retryResponse.json();
-    }
 
     if (!response.ok) {
       throw new Error(`API call failed: ${response.status} ${response.statusText}`);

@@ -1,0 +1,218 @@
+{
+  "successful": [
+    {
+      "prompt": "Show me the critical alarms for today",
+      "category": "Alarm Management",
+      "response": "\u2705 **All systems are functioning properly!**\n\nNo active alarms found across the entire building, which indicates:\n\u2022 All equipment is operating normally\n\u2022 All sensors are reporting within acceptable ran"
+    },
+    {
+      "prompt": "show me critical alarms for past",
+      "category": "Alarm Management",
+      "response": "\ud83d\udd34 **Critical Alarms:**\n\n| Time | Device Name | Location | Type | Severity | Status |\n| --- | --- | --- | --- | --- | --- |\n| 2025-08-07 11:20 | IAQ Sensor V2 - 300150 | - | Sensors Status Alert | CRIT"
+    },
+    {
+      "prompt": "Show me alarms with high CO2 levels",
+      "category": "Alarm Management",
+      "response": "\u2705 **All systems are functioning properly!**\n\nNo active alarms found across the entire building, which indicates:\n\u2022 All equipment is operating normally\n\u2022 All sensors are reporting within acceptable ran"
+    },
+    {
+      "prompt": "What's the highest severity alarm right now",
+      "category": "Alarm Management",
+      "response": "\ud83d\udd34 **Critical Alarms:**\n\n| Time | Device Name | Location | Type | Severity | Status |\n| --- | --- | --- | --- | --- | --- |\n| 2025-08-07 11:20 | IAQ Sensor V2 - 300150 | - | Sensors Status Alert | CRIT"
+    },
+    {
+      "prompt": "Show me minor alarms for the past 1 week",
+      "category": "Alarm Management",
+      "response": "\ud83d\udfe1 **Minor Alarms:**\n\n| Time | Device Name | Location | Type | Severity | Status |\n| --- | --- | --- | --- | --- | --- |\n| 2025-05-28 12:35 | IAQ Sensor V2 - 300180 | - | IAQ alert | MINOR | ACTIVE_UNA"
+    },
+    {
+      "prompt": "Show all alarms for RH/T Sensor - 150002",
+      "category": "Alarm Management",
+      "response": "\ud83d\udea8 **1 active alarms found:**\n\n\ud83d\udd34 **Critical:** 1\n\n**Detailed Alarms with Fault Analysis:**\n\n\ud83d\udcca **SENSORS STATUS ALERT Alarms (1):**\n\ud83d\udd0d **Fault Analysis:** **General Alarm:** Check device status, verify s"
+    },
+    {
+      "prompt": "Building mein abhi kaunse alarms active hain",
+      "category": "Alarm Management",
+      "response": "\ud83d\udea8 **6 active alarms found:**\n\n\ud83d\udd34 **Critical:** 4\n\ud83d\udfe1 **Minor:** 2\n\n**Detailed Alarms with Fault Analysis:**\n\n\ud83d\udcca **SENSORS STATUS ALERT Alarms (4):**\n\ud83d\udd0d **Fault Analysis:** **General Alarm:** Check device s"
+    },
+    {
+      "prompt": "Sirf critical alarms dikhao",
+      "category": "Alarm Management",
+      "response": "\ud83d\udd34 **Critical Alarms:**\n\n| Time | Device Name | Location | Type | Severity | Status |\n| --- | --- | --- | --- | --- | --- |\n| 2025-08-07 11:20 | IAQ Sensor V2 - 300150 | - | Sensors Status Alert | CRIT"
+    },
+    {
+      "prompt": "Saare alarms show",
+      "category": "Alarm Management",
+      "response": "\ud83d\udea8 **6 active alarms found:**\n\n\ud83d\udd34 **Critical:** 4\n\ud83d\udfe1 **Minor:** 2\n\n**Detailed Alarms with Fault Analysis:**\n\n\ud83d\udcca **SENSORS STATUS ALERT Alarms (4):**\n\ud83d\udd0d **Fault Analysis:** **General Alarm:** Check device s"
+    },
+    {
+      "prompt": "Show me any system issues",
+      "category": "System/Device Status",
+      "response": "\ud83d\udea8 **6 active alarms found:**\n\n\ud83d\udd34 **Critical:** 4\n\ud83d\udfe1 **Minor:** 2\n\n**Detailed Alarms with Fault Analysis:**\n\n\ud83d\udcca **SENSORS STATUS ALERT Alarms (4):**\n\ud83d\udd0d **Fault Analysis:** **General Alarm:** Check device s"
+    },
+    {
+      "prompt": "Show me all the active devices",
+      "category": "System/Device Status",
+      "response": "**Device List:**\n\n| Device Name | Location | Type | Status |\n| --- | --- | --- | --- |\n| 2F-Room33-Thermostat | - | Thermostat | active |\n| 2F-Room34-Thermostat | - | Thermostat | active |\n| 2F-Room35"
+    },
+    {
+      "prompt": "Show me battery status of all devices",
+      "category": "System/Device Status",
+      "response": "\ud83d\udd0b **Battery Status Report for All Devices:**\n\n\u26a0\ufe0f **Devices with Low Battery (<3.0V):** 11\n| Device Name | Battery Level | Status |\n| --- | --- | --- |\n| RH/T Sensor - 800441 | 2.97V | Needs attention "
+    },
+    {
+      "prompt": "List devices with low battery",
+      "category": "System/Device Status",
+      "response": "\ud83d\udd0b **Devices with Low Battery (<3.0V):**\n\n| Device Name | Battery Level | Status |\n| --- | --- | --- |\n| RH/T Sensor - 800441 | 2.97V | Needs attention |\n| RH/T Sensor - 800442 | 2.99V | Needs attentio"
+    },
+    {
+      "prompt": "Give temperature of 2F-Room50-Thermostat",
+      "category": "Temperature Control (2F-Room50-Thermostat)",
+      "response": "\ud83c\udf21\ufe0f Temperature for 2F-Room50-Thermostat (4505c680-4c26-11f0-816d-85352a7c91ff): 21\u00b0C"
+    },
+    {
+      "prompt": "Show temperature in Second Floor Room 50",
+      "category": "Temperature Control (2F-Room50-Thermostat)",
+      "response": "\ud83c\udf21\ufe0f Temperature for 2F-Room50-Thermostat (4505c680-4c26-11f0-816d-85352a7c91ff): 21\u00b0C"
+    },
+    {
+      "prompt": "Set temperature in 2F-Room50-Thermostat to 24 degrees",
+      "category": "Temperature Control (2F-Room50-Thermostat)",
+      "response": "\u2705 Room Temperature Setpoint set to 24.0\u00b0C for 2F-Room50-Thermostat"
+    },
+    {
+      "prompt": "Reduce the temperature of 2nd Floor Room 50 by 2 degrees",
+      "category": "Temperature Control (2F-Room50-Thermostat)",
+      "response": "\u2705 Room Temperature Setpoint set to 22.0\u00b0C for 2nd Floor Room 50"
+    },
+    {
+      "prompt": "Increase the temperature of 2nd Floor Room 50 by 3 degrees",
+      "category": "Temperature Control (2F-Room50-Thermostat)",
+      "response": "\u2705 Room Temperature Setpoint set to 25.0\u00b0C for 2nd Floor Room 50"
+    },
+    {
+      "prompt": "Room 50 2nd floor ka tapmaan kya hai",
+      "category": "Temperature Control (2F-Room50-Thermostat)",
+      "response": "\ud83c\udf21\ufe0f Temperature for 2F-Room50-Thermostat (4505c680-4c26-11f0-816d-85352a7c91ff): 25.0\u00b0C"
+    },
+    {
+      "prompt": "Room 50 2nd floor ka temperature kya hai",
+      "category": "Temperature Control (2F-Room50-Thermostat)",
+      "response": "\ud83c\udf21\ufe0f Temperature for 2F-Room50-Thermostat (4505c680-4c26-11f0-816d-85352a7c91ff): 25.0\u00b0C"
+    },
+    {
+      "prompt": "Room 50 2nd floor ka temperature 22 degree par set karo",
+      "category": "Temperature Control (2F-Room50-Thermostat)",
+      "response": "\u2705 Room Temperature Setpoint set to 22.0\u00b0C for Room 50 2nd floor"
+    },
+    {
+      "prompt": "Check humidity for RH/T Sensor - 150002",
+      "category": "Humidity Check",
+      "response": "Humidity for RH/T Sensor - 150002 (78c72670-52f4-11ef-b890-bf853c6e5747): 64.8%"
+    },
+    {
+      "prompt": "Set fan speed to 0 in 2F-Room50-Thermostat",
+      "category": "Fan Control",
+      "response": "\u2705 Set Fan Speed set to 0 for 2F-Room50-Thermostat"
+    },
+    {
+      "prompt": "Increase the fan speed in second floor room no 50 to high speed",
+      "category": "Fan Control",
+      "response": "\u2705 Set Fan Speed set to 2 for second floor room no 50"
+    },
+    {
+      "prompt": "Second floor room 50 mein fan speed high karo",
+      "category": "Fan Control",
+      "response": "\u2705 Set Fan Speed set to 2 for Second floor room 50"
+    },
+    {
+      "prompt": "Predict HVAC failures for next 7 days",
+      "category": "Predictive Maintenance",
+      "response": "\ud83d\udd0d **Predictive Maintenance Analysis \u2013 Next 7 days**\n**Systems:** Hvac\n\n\u2705 **42 devices** found and available for analysis\n\n**Key Benefits:**\n\u2022 Proactive issue detection\n\u2022 Reduced downtime\n\u2022 Optimized m"
+    },
+    {
+      "prompt": "How to fix filter choke alarm",
+      "category": "Predictive Maintenance",
+      "response": "**General Alarm:** Check device status, verify system operation, inspect for faults, contact maintenance if needed."
+    },
+    {
+      "prompt": "Predict device failures for tomorrow",
+      "category": "Predictive Maintenance",
+      "response": "\ud83d\udd0d **Predictive Maintenance Analysis \u2013 Next 1 days**\n**Systems:** All\n\n\u2705 **100 devices** found and available for analysis\n\n**Key Benefits:**\n\u2022 Proactive issue detection\n\u2022 Reduced downtime\n\u2022 Optimized m"
+    },
+    {
+      "prompt": "Predict HVAC issues for next 30 days",
+      "category": "Predictive Maintenance",
+      "response": "\ud83d\udd0d **Predictive Maintenance Analysis \u2013 Next 30 days**\n**Systems:** Hvac\n\n\u2705 **42 devices** found and available for analysis\n\n**Key Benefits:**\n\u2022 Proactive issue detection\n\u2022 Reduced downtime\n\u2022 Optimized "
+    },
+    {
+      "prompt": "Are any devices likely to fail in the next 7 days",
+      "category": "Predictive Maintenance",
+      "response": "\ud83d\udd0d **Predictive Maintenance Analysis \u2013 Next 7 days**\n**Systems:** All\n\n\u2705 **100 devices** found and available for analysis\n\n**Key Benefits:**\n\u2022 Proactive issue detection\n\u2022 Reduced downtime\n\u2022 Optimized m"
+    },
+    {
+      "prompt": "Show me energy consumption for all devices",
+      "category": "Energy Consumption",
+      "response": "**Device List:**\n\n| Device Name | Location | Type | Status |\n| --- | --- | --- | --- |\n| 2F-Room33-Thermostat | - | Thermostat | active |\n| 2F-Room34-Thermostat | - | Thermostat | active |\n| 2F-Room35"
+    },
+    {
+      "prompt": "Get energy consumption for Room 50 2nd floor",
+      "category": "Energy Consumption",
+      "response": "\u26a1 **Energy Consumption for room 50:**\n\n| Device Name | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1050 | power_consumption | 0.0 | W | 2025-0"
+    },
+    {
+      "prompt": "Show me energy consumption data",
+      "category": "Energy Consumption",
+      "response": "\u26a1 **Energy Consumption Summary:**\n\n| Device Name | Location | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1009 | Unknown | power_consump"
+    },
+    {
+      "prompt": "Show me energy usage on 2nd floor",
+      "category": "Energy Consumption",
+      "response": "\u26a1 **Energy Consumption Summary:**\n\n| Device Name | Location | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1009 | Unknown | power_consump"
+    }
+  ],
+  "failed": [
+    {
+      "prompt": "Check humidity of second floor room number 50",
+      "category": "Humidity Check",
+      "error": "\u274c **No data available** for 'humidity' on device 96eec750-4c24-11f0-816d-85352a7c91ff.\n\n\ud83d\udccb **Available metrics:** heartbeat, device monitor, mode status, set fan speed, fan speed status, room temperature setpoint, room temperature, thermostat status\n\n\ud83d\udca1 **Try:** 'Show [available metric] for [device]'\n\n\ud83d\udca1 **Other devices with 'humidity' metric:** RH/T Sensor - 800440, RH/T Sensor - 800441, RH/T Sensor - 800442, IAQ Sensor V2 - 150001, IAQ Sensor V2 - 300180 and 9 more"
+    }
+  ],
+  "summary": {
+    "Alarm Management": {
+      "success": 9,
+      "total": 9,
+      "success_rate": 100.0
+    },
+    "System/Device Status": {
+      "success": 4,
+      "total": 4,
+      "success_rate": 100.0
+    },
+    "Temperature Control (2F-Room50-Thermostat)": {
+      "success": 8,
+      "total": 8,
+      "success_rate": 100.0
+    },
+    "Humidity Check": {
+      "success": 1,
+      "total": 2,
+      "success_rate": 50.0
+    },
+    "Fan Control": {
+      "success": 3,
+      "total": 3,
+      "success_rate": 100.0
+    },
+    "Predictive Maintenance": {
+      "success": 5,
+      "total": 5,
+      "success_rate": 100.0
+    },
+    "Energy Consumption": {
+      "success": 4,
+      "total": 4,
+      "success_rate": 100.0
+    }
+  }
+}
