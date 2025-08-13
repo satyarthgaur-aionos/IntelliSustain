@@ -109,10 +109,20 @@ def login(user: User):
             "password": user.password  # Use the same password from local login
         }
         
+        # Add more detailed headers and debugging
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": "IntelliSustain-AI-Agent/2.0.0",
+            "Accept": "application/json"
+        }
+        
+        print(f"[DEBUG] Calling Inferrix API with headers: {headers}")
+        print(f"[DEBUG] Inferrix login data: {inferrix_login_data}")
+        
         inferrix_response = requests.post(
             "https://cloud.inferrix.com/api/auth/login",
             json=inferrix_login_data,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
             timeout=30
         )
         
