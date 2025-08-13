@@ -13,6 +13,9 @@ from pydantic import BaseModel
 from enhanced_agentic_agent import get_enhanced_agentic_agent
 from auth_db import get_current_user
 
+# Import database cleanup for one-time execution
+from database_cleanup import cleanup_database
+
 app = FastAPI(title="Inferrix AI Agent API", version="1.0.0")
 
 # Rate limiting
@@ -426,6 +429,10 @@ def debug_devices(current_user=Depends(get_current_user)):
 
 if __name__ == "__main__":
     import uvicorn
+    
+    # Run database cleanup once on startup
+    cleanup_database()
+    
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
 
