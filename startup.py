@@ -54,17 +54,29 @@ def setup_database():
             except Exception as e:
                 print(f"⚠️  Could not reset sequence: {e}")
             
-            # Step 3: Create ONLY the correct user
+            # Step 3: Create ONLY the correct user with proper password hash
             print("👤 Creating correct user: satyarth.gaur@aionos.ai")
+            
+            # Generate password hash using bcrypt directly to ensure compatibility
+            from passlib.hash import bcrypt
+            password = "Satya2025#"
+            hashed_password = bcrypt.hash(password)
+            
             correct_user = User(
                 email="satyarth.gaur@aionos.ai",
-                hashed_password=get_password_hash("Satya2025#"),
+                hashed_password=hashed_password,
                 is_active=True,
                 role="user"
             )
             db.add(correct_user)
             db.commit()
-            print("✅ Created user: satyarth.gaur@aionos.ai")
+            print("✅ Created user: satyarth.gaur@aionos.ai with correct password hash")
+            
+            # Verify the password hash works
+            if bcrypt.verify(password, hashed_password):
+                print("✅ Password hash verification successful!")
+            else:
+                print("❌ Password hash verification failed!")
             
             # Step 4: Verify database state
             users = db.query(User).all()
