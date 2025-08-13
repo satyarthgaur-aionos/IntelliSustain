@@ -53,7 +53,7 @@
     {
       "prompt": "Show me all the active devices",
       "category": "System/Device Status",
-      "response": "**Device List:**\n\n| Device Name | Location | Type | Status |\n| --- | --- | --- | --- |\n| 2F-Room33-Thermostat | - | Thermostat | active |\n| 2F-Room34-Thermostat | - | Thermostat | active |\n| 2F-Room35"
+      "response": "**Device List:**\n\n| Device Name | Location | Type | Status |\n| --- | --- | --- | --- |\n| 2F-Room33-Thermostat | 2F-Room33 | Thermostat | active |\n| 2F-Room34-Thermostat | 2F-Room34 | Thermostat | acti"
     },
     {
       "prompt": "Show me battery status of all devices",
@@ -153,7 +153,7 @@
     {
       "prompt": "Show me energy consumption for all devices",
       "category": "Energy Consumption",
-      "response": "**Device List:**\n\n| Device Name | Location | Type | Status |\n| --- | --- | --- | --- |\n| 2F-Room33-Thermostat | - | Thermostat | active |\n| 2F-Room34-Thermostat | - | Thermostat | active |\n| 2F-Room35"
+      "response": "\u26a1 **Energy Consumption Summary:**\n\n| Device Name | Location | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1006 | Unknown | power_consump"
     },
     {
       "prompt": "Get energy consumption for Room 50 2nd floor",
@@ -163,12 +163,12 @@
     {
       "prompt": "Show me energy consumption data",
       "category": "Energy Consumption",
-      "response": "\u26a1 **Energy Consumption Summary:**\n\n| Device Name | Location | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1009 | Unknown | power_consump"
+      "response": "\u26a1 **Energy Consumption Summary:**\n\n| Device Name | Location | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1006 | Unknown | power_consump"
     },
     {
       "prompt": "Show me energy usage on 2nd floor",
       "category": "Energy Consumption",
-      "response": "\u26a1 **Energy Consumption Summary:**\n\n| Device Name | Location | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1009 | Unknown | power_consump"
+      "response": "\u26a1 **Energy Consumption for 2nd floor:**\n\n| Device Name | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- |\n| 2F-TFA | vfd current | 5.0 | A | 2025-08-13 18:06 |\n| 2F-TFA | vfd"
     }
   ],
   "failed": [

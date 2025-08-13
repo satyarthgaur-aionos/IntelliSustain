@@ -990,7 +990,7 @@ class EnhancedAgenticInferrixAgent:
         if token:
             self.set_api_token(token)
         # PATCH: Battery status direct handling (handle 'low battery' and similar queries FIRST)
-        battery_keywords_direct = ['low battery', 'devices with low battery', 'show low battery', 'battery status', 'battery level']
+        battery_keywords_direct = ['low battery', 'devices with low battery', 'show low battery', 'battery status', 'battery level', 'normal battery', 'devices with normal battery', 'show normal battery', 'proper battery', 'correct battery', 'optimum battery', 'optimal battery', 'good battery', 'healthy battery']
         if any(word in user_query.lower() for word in battery_keywords_direct):
             return self._get_battery_status_all_devices({'query': user_query})
 
@@ -4921,9 +4921,11 @@ class EnhancedAgenticInferrixAgent:
                 else:
                     no_battery_data.append(device_name)
             
-            # Only show low battery devices if query is for low battery
+            # Handle specific battery queries
             user_query = args.get('query', '').lower() if args.get('query') else ''
             low_battery_phrases = ['low battery', 'devices with low battery', 'show low battery']
+            normal_battery_phrases = ['normal battery', 'devices with normal battery', 'show normal battery', 'proper battery', 'correct battery', 'optimum battery', 'optimal battery', 'good battery', 'healthy battery']
+            
             if any(phrase in user_query for phrase in low_battery_phrases):
                 if low_battery_devices:
                     response = "🔋 **Devices with Low Battery (<3.0V):**\n\n"
@@ -4943,6 +4945,23 @@ class EnhancedAgenticInferrixAgent:
                     return response
                 else:
                     return "✅ **No devices with low battery.** All devices have sufficient battery levels."
+            
+            elif any(phrase in user_query for phrase in normal_battery_phrases):
+                if normal_battery_devices:
+                    response = "🔋 **Devices with Normal Battery (≥3.0V):**\n\n"
+                    # Use tabular format for normal battery devices
+                    headers = ["Device Name", "Battery Level", "Status"]
+                    rows = []
+                    for name, battery in normal_battery_devices:
+                        rows.append([name, f"{battery:.2f}V", "Normal"])
+                    
+                    table = self._format_markdown_table(headers, rows)
+                    response += table
+                    
+                    response += f"\n✅ **Total devices with normal battery:** {len(normal_battery_devices)}\n"
+                    return response
+                else:
+                    return "❌ **No devices with normal battery found.** All devices may have low battery or no battery data available."
             # Otherwise, show full report
             response = "🔋 **Battery Status Report for All Devices:**\n\n"
             if low_battery_devices:

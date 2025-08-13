@@ -166,7 +166,15 @@ function MarkdownTable({ markdown }) {
       }
       return alignedCells;
     })
-    .filter(row => row.some(cell => cell !== '-' && cell.length > 0)); // Filter out completely empty rows
+    .filter(row => {
+      // Filter out completely empty rows and rows that are just header duplicates
+      const hasData = row.some(cell => cell !== '-' && cell.length > 0);
+      const isHeaderDuplicate = row.every((cell, index) => {
+        const header = headers[index] || '';
+        return cell.toLowerCase() === header.toLowerCase() || cell === '---';
+      });
+      return hasData && !isHeaderDuplicate;
+    });
   
   // Use the DynamicTable component for proper HTML table rendering
   return <DynamicTable data={rows} headers={headers} />;
