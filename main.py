@@ -368,9 +368,10 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
 def get_alarms(current_user=Depends(get_current_user), request: Request = None):
     """Get alarms from Inferrix API (MCP-compatible endpoint)"""
     try:
-        jwt_token = os.getenv("INFERRIX_API_TOKEN")
-        if not jwt_token:
-            raise HTTPException(status_code=500, detail="Inferrix API token not configured")
+        # Get user's Inferrix token from request header
+        inferrix_token = request.headers.get("X-Inferrix-Token")
+        if not inferrix_token:
+            raise HTTPException(status_code=401, detail="No token provided")
         
         import requests
         url = "https://cloud.inferrix.com/api/v2/alarms"
@@ -381,7 +382,7 @@ def get_alarms(current_user=Depends(get_current_user), request: Request = None):
             "sortOrder": "DESC",
             "statusList": "ACTIVE"  # Only ACTIVE alarms by default
         }
-        headers = {"X-Authorization": f"Bearer {jwt_token}", "Content-Type": "application/json"}
+        headers = {"X-Authorization": f"Bearer {inferrix_token}", "Content-Type": "application/json"}
         
         # Check for history/past/last/week/month/day/old in query string
         include_cleared = False
@@ -403,12 +404,13 @@ def get_alarms(current_user=Depends(get_current_user), request: Request = None):
         raise HTTPException(status_code=500, detail=f"Failed to fetch alarms: {str(e)}")
 
 @app.get("/inferrix/devices")
-def get_devices(current_user=Depends(get_current_user)):
+def get_devices(current_user=Depends(get_current_user), request: Request = None):
     """Get devices from Inferrix API (MCP-compatible endpoint)"""
     try:
-        jwt_token = os.getenv("INFERRIX_API_TOKEN")
-        if not jwt_token:
-            raise HTTPException(status_code=500, detail="Inferrix API token not configured")
+        # Get user's Inferrix token from request header
+        inferrix_token = request.headers.get("X-Inferrix-Token")
+        if not inferrix_token:
+            raise HTTPException(status_code=401, detail="No token provided")
         
         import requests
         url = "https://cloud.inferrix.com/api/user/devices"
@@ -419,7 +421,7 @@ def get_devices(current_user=Depends(get_current_user)):
             "sortOrder": "DESC",
             "includeCustomers": "true"
         }
-        headers = {"X-Authorization": f"Bearer {jwt_token}", "Content-Type": "application/json"}
+        headers = {"X-Authorization": f"Bearer {inferrix_token}", "Content-Type": "application/json"}
         
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
@@ -428,26 +430,15 @@ def get_devices(current_user=Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Failed to fetch devices: {str(e)}")
 
 INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
-INFERRIX_API_TOKEN = os.getenv("INFERRIX_API_TOKEN", "").strip()
 
 # MCP configuration - now integrated into main app
 MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8000")
 
 def inferrix_api_status():
     """Check if Inferrix API is reachable"""
-    url = f"{INFERRIX_BASE_URL}/alarms"
-    headers = {
-        "X-Authorization": f"Bearer {INFERRIX_API_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    try:
-        import requests
-        response = requests.get(url, headers=headers, timeout=5)
-        response.raise_for_status()
-        data = response.json().get("data", [])
-        return {"status": "Inferrix API reachable", "alarms_count": len(data)}
-    except Exception as e:
-        return {"status": "Inferrix API unreachable", "error": str(e)}
+    # Since we now use user tokens, we can't check API status without a token
+    # This function is used for the /api endpoint which doesn't have user context
+    return {"status": "Inferrix API requires user authentication", "note": "Use /inferrix/devices or /inferrix/alarms with user token"}
 
 @app.get("/api")
 def api_root():
@@ -526,15 +517,16 @@ def api_info():
     }
 
 @app.get("/debug/devices")
-def debug_devices(current_user=Depends(get_current_user)):
+def debug_devices(current_user=Depends(get_current_user), request: Request = None):
     """Debug endpoint to show available devices and their IDs"""
     try:
-        jwt_token = os.getenv("INFERRIX_API_TOKEN")
-        if not jwt_token:
-            raise HTTPException(status_code=500, detail="Inferrix API token not configured")
+        # Get user's Inferrix token from request header
+        inferrix_token = request.headers.get("X-Inferrix-Token")
+        if not inferrix_token:
+            raise HTTPException(status_code=401, detail="No token provided")
         
         import requests
-        headers = {"X-Authorization": f"Bearer {jwt_token}"}
+        headers = {"X-Authorization": f"Bearer {inferrix_token}"}
         response = requests.get(
             "https://cloud.inferrix.com/api/user/devices",
             headers=headers,
