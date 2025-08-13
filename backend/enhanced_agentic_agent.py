@@ -345,17 +345,21 @@ class EnhancedIntelligentContextExtractor:
         """Extract device information from query"""
         query_lower = query.lower()
         
-        # Look for specific device IDs mentioned in the top 30 prompts
-        if '300186' in query:
-            return '300186'
-        elif '150002' in query:
-            return '150002'
+        # Look for device ID patterns (UUID format or numeric)
+        import re
+        device_patterns = [
+            r'device\s+([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})',  # UUID format
+            r'device\s+(\d+)',
+            r'device\s+id\s+(\d+)',
+            r'(\d{6,})',  # 6+ digit numbers
+        ]
         
-        # Look for device patterns
-        if 'iaq sensor v2 - 300186' in query_lower:
-            return '300186'
-        elif 'rh/t sensor - 150002' in query_lower:
-            return '150002'
+        for pattern in device_patterns:
+            match = re.search(pattern, query, re.IGNORECASE)
+            if match:
+                return match.group(1)
+        
+        return None
         
         # Look for device ID patterns (UUID format)
         device_patterns = [
@@ -3597,9 +3601,19 @@ class EnhancedAgenticInferrixAgent:
         # Environmental metrics - use real data if available
         response += "🌡️ **Environmental Metrics:**\n"
         try:
-            # Get real temperature and humidity data
-            temp_data = self._get_device_telemetry_data("300186", "temperature")
-            humidity_data = self._get_device_telemetry_data("300186", "humidity")
+            # Get real temperature and humidity data from available devices
+            devices = self._make_api_request("devices?pageSize=10&page=0")
+            if isinstance(devices, dict) and 'data' in devices and devices['data']:
+                # Use the first available device for environmental data
+                first_device = devices['data'][0]
+                device_id = first_device.get('id', {}).get('id') if isinstance(first_device.get('id'), dict) else first_device.get('id')
+                if device_id:
+                    temp_data = self._get_device_telemetry_data(device_id, "temperature")
+                    humidity_data = self._get_device_telemetry_data(device_id, "humidity")
+                else:
+                    temp_data = humidity_data = None
+            else:
+                temp_data = humidity_data = None
             
             if temp_data and temp_data != 'None':
                 response += f"• Average Temperature: {temp_data}°C\n"
@@ -3661,10 +3675,20 @@ class EnhancedAgenticInferrixAgent:
         # Step 1: Analyze current energy consumption
         response += "**Step 1: Energy Analysis**\n"
         try:
-            # Get real energy consumption data
-            energy_data = self._get_device_telemetry_data("300186", "energy")
-            if energy_data and energy_data != 'None':
-                response += f"• Current consumption: {energy_data} kWh\n"
+            # Get real energy consumption data from available devices
+            devices = self._make_api_request("devices?pageSize=10&page=0")
+            if isinstance(devices, dict) and 'data' in devices and devices['data']:
+                # Use the first available device for energy data
+                first_device = devices['data'][0]
+                device_id = first_device.get('id', {}).get('id') if isinstance(first_device.get('id'), dict) else first_device.get('id')
+                if device_id:
+                    energy_data = self._get_device_telemetry_data(device_id, "energy")
+                    if energy_data and energy_data != 'None':
+                        response += f"• Current consumption: {energy_data} kWh\n"
+                    else:
+                        response += "• Current consumption: Data unavailable\n"
+                else:
+                    response += "• Current consumption: Data unavailable\n"
             else:
                 response += "• Current consumption: Data unavailable\n"
         except:

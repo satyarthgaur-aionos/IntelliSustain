@@ -275,22 +275,11 @@ def get_devices(request: Request, current_user=Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f"Inferrix API call failed: {str(e)}")
 
 INFERRIX_BASE_URL = "https://cloud.inferrix.com/api"
-INFERRIX_API_TOKEN = os.getenv("INFERRIX_API_TOKEN", "").strip()
 
 def inferrix_api_status():
     """Check if Inferrix API is reachable"""
-    url = f"{INFERRIX_BASE_URL}/alarms"
-    headers = {
-        "X-Authorization": f"Bearer {INFERRIX_API_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    try:
-        response = requests.get(url, headers=headers, timeout=5)
-        response.raise_for_status()
-        data = response.json().get("data", [])
-        return {"status": "Inferrix API reachable", "alarms_count": len(data)}
-    except Exception as e:
-        return {"status": "Inferrix API unreachable", "error": str(e)}
+    # Since we now use user-specific tokens, we can't check API status without a token
+    return {"status": "Inferrix API requires user authentication", "note": "Use /inferrix/devices or /inferrix/alarms with user token"}
 
 @app.get("/")
 def root():

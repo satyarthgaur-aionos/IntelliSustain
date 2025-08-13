@@ -264,23 +264,19 @@ def login(user: User):
             traceback.print_exc()
             raise HTTPException(status_code=500, detail=f"Authentication error: {str(e)}")
     else:
-        # Demo login for when database is not available
-        if user.email == "demo@inferrix.com" and user.password == "demo123":
-            return {"access_token": "demo_token", "token_type": "bearer"}
-        # Removed tech@intellisustain.com login
-        else:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+        # No database available - cannot authenticate
+        raise HTTPException(status_code=503, detail="Database not available")
 
 def get_current_user():
-    """Get current user - works with or without database"""
+    """Get current user - requires database"""
     if DATABASE_AVAILABLE:
         try:
             from auth_db import get_current_user as db_get_current_user
             return db_get_current_user()
         except:
-            return {"email": "demo@inferrix.com"}
+            raise HTTPException(status_code=401, detail="Authentication required")
     else:
-        return {"email": "demo@inferrix.com"}
+        raise HTTPException(status_code=503, detail="Database not available")
 
 @app.post("/chat")
 def chat(prompt: Prompt, current_user=Depends(get_current_user)):
@@ -315,9 +311,9 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
                     
             except Exception as e:
                 print(f"Enhanced agent error: {e}")
-                response = f"Demo response to: {prompt.query}"
+                response = "No data found or unable to answer your query."
         else:
-            response = f"Demo response to: {prompt.query}"
+            response = "No data found or unable to answer your query."
         
         print(f"[DEBUG] Final response: {response[:100]}...")
         
@@ -378,9 +374,9 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
                     
             except Exception as e:
                 print(f"Enhanced agent error: {e}")
-                response = f"Enhanced demo response to: {prompt.query}"
+                response = "No data found or unable to answer your query."
         else:
-            response = f"Enhanced demo response to: {prompt.query}"
+            response = "No data found or unable to answer your query."
         
         print(f"[DEBUG] Enhanced chat - Final response: {response[:100]}...")
         
