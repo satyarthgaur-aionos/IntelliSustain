@@ -1623,6 +1623,9 @@ class EnhancedAgenticInferrixAgent:
                     if match:
                         location = match.group(1).strip()
             
+            # Debug logging
+            print(f"[DEBUG] Energy consumption query - device_id: {device_id}, location: {location}")
+            
             return self._get_energy_consumption_data({
                 'device_id': device_id,
                 'location': location,
@@ -1978,7 +1981,86 @@ class EnhancedAgenticInferrixAgent:
         rows = []
         for d in devices:
             name = d.get('name', '-')
-            location = d.get('location', '-')
+            
+            # Extract location from device name - Enhanced pattern matching
+            location = 'Unknown'
+            if name and name != '-':
+                # Pattern 1: "2F-Room50-Thermostat" -> "2F-Room50"
+                if '2F-' in name and 'Room' in name:
+                    parts = name.split('-')
+                    if len(parts) >= 2:
+                        location = f"{parts[0]}-{parts[1]}"
+                
+                # Pattern 2: "Room 50" or "Room50" -> "Room 50"
+                elif 'Room' in name:
+                    room_match = re.search(r'(Room\s*\d+)', name)
+                    if room_match:
+                        location = room_match.group(1)
+                
+                # Pattern 3: "Floor" patterns -> "2nd Floor"
+                elif 'Floor' in name or 'floor' in name:
+                    floor_match = re.search(r'(\d+(?:st|nd|rd|th)?\s*floor)', name, re.IGNORECASE)
+                    if floor_match:
+                        location = floor_match.group(1)
+                
+                # Pattern 4: "IAQ Sensor V2 - 300180" -> Try to extract location from device properties
+                elif 'IAQ Sensor' in name or 'Sensor' in name:
+                    # For sensors, try to get location from device properties if available
+                    device_id = d.get('id', {})
+                    if isinstance(device_id, dict):
+                        device_id = device_id.get('id', '')
+                    
+                    if device_id:
+                        try:
+                            # Try to get device details to see if location is stored in properties
+                            device_details = self._make_api_request(f"user/devices/{device_id}")
+                            if device_details and isinstance(device_details, dict):
+                                # Check for location in device properties
+                                properties = device_details.get('properties', {})
+                                if properties:
+                                    location_prop = properties.get('location') or properties.get('room') or properties.get('floor')
+                                    if location_prop:
+                                        location = str(location_prop)
+                        except:
+                            pass
+                    
+                    # If no location found in properties, try to extract from name
+                    if location == 'Unknown':
+                        # Try to extract any location-like pattern
+                        location_patterns = [
+                            r'(\d+(?:st|nd|rd|th)?\s*floor)',
+                            r'(room\s*\d+)',
+                            r'(building\s*\w+)',
+                            r'(area\s*\w+)',
+                            r'(wing\s*\w+)'
+                        ]
+                        for pattern in location_patterns:
+                            match = re.search(pattern, name, re.IGNORECASE)
+                            if match:
+                                location = match.group(1).strip()
+                                break
+                
+                # Pattern 5: Generic location extraction for any device
+                else:
+                    # Try to extract any location-like pattern from device name
+                    location_patterns = [
+                        r'(\d+(?:st|nd|rd|th)?\s*floor)',
+                        r'(room\s*\d+)',
+                        r'(building\s*\w+)',
+                        r'(area\s*\w+)',
+                        r'(wing\s*\w+)',
+                        r'(\d+f)',  # 2F, 3F, etc.
+                        r'(\d+st)',  # 1st, 2nd, etc.
+                        r'(\d+nd)',
+                        r'(\d+rd)',
+                        r'(\d+th)'
+                    ]
+                    for pattern in location_patterns:
+                        match = re.search(pattern, name, re.IGNORECASE)
+                        if match:
+                            location = match.group(1).strip()
+                            break
+            
             dtype = d.get('type', '-')
             device_id = d.get('id', {})
             if isinstance(device_id, dict):
@@ -2013,7 +2095,85 @@ class EnhancedAgenticInferrixAgent:
     # --- PATCH: Single device telemetry/response formatting ---
     def _format_single_device_response(self, device, metric, value, date=None):
         name = device.get('name', '-')
-        location = device.get('location', '-')
+        
+        # Extract location from device name - Enhanced pattern matching
+        location = 'Unknown'
+        if name and name != '-':
+            # Pattern 1: "2F-Room50-Thermostat" -> "2F-Room50"
+            if '2F-' in name and 'Room' in name:
+                parts = name.split('-')
+                if len(parts) >= 2:
+                    location = f"{parts[0]}-{parts[1]}"
+            
+            # Pattern 2: "Room 50" or "Room50" -> "Room 50"
+            elif 'Room' in name:
+                room_match = re.search(r'(Room\s*\d+)', name)
+                if room_match:
+                    location = room_match.group(1)
+            
+            # Pattern 3: "Floor" patterns -> "2nd Floor"
+            elif 'Floor' in name or 'floor' in name:
+                floor_match = re.search(r'(\d+(?:st|nd|rd|th)?\s*floor)', name, re.IGNORECASE)
+                if floor_match:
+                    location = floor_match.group(1)
+            
+            # Pattern 4: "IAQ Sensor V2 - 300180" -> Try to extract location from device properties
+            elif 'IAQ Sensor' in name or 'Sensor' in name:
+                # For sensors, try to get location from device properties if available
+                device_id = device.get('id', {})
+                if isinstance(device_id, dict):
+                    device_id = device_id.get('id', '')
+                
+                if device_id:
+                    try:
+                        # Try to get device details to see if location is stored in properties
+                        device_details = self._make_api_request(f"user/devices/{device_id}")
+                        if device_details and isinstance(device_details, dict):
+                            # Check for location in device properties
+                            properties = device_details.get('properties', {})
+                            if properties:
+                                location_prop = properties.get('location') or properties.get('room') or properties.get('floor')
+                                if location_prop:
+                                    location = str(location_prop)
+                    except:
+                        pass
+                
+                # If no location found in properties, try to extract from name
+                if location == 'Unknown':
+                    # Try to extract any location-like pattern
+                    location_patterns = [
+                        r'(\d+(?:st|nd|rd|th)?\s*floor)',
+                        r'(room\s*\d+)',
+                        r'(building\s*\w+)',
+                        r'(area\s*\w+)',
+                        r'(wing\s*\w+)'
+                    ]
+                    for pattern in location_patterns:
+                        match = re.search(pattern, name, re.IGNORECASE)
+                        if match:
+                            location = match.group(1).strip()
+                            break
+            
+            # Pattern 5: Generic location extraction for any device
+            else:
+                # Try to extract any location-like pattern from device name
+                location_patterns = [
+                    r'(\d+(?:st|nd|rd|th)?\s*floor)',
+                    r'(room\s*\d+)',
+                    r'(building\s*\w+)',
+                    r'(area\s*\w+)',
+                    r'(wing\s*\w+)',
+                    r'(\d+f)',  # 2F, 3F, etc.
+                    r'(\d+st)',  # 1st, 2nd, etc.
+                    r'(\d+nd)',
+                    r'(\d+rd)',
+                    r'(\d+th)'
+                ]
+                for pattern in location_patterns:
+                    match = re.search(pattern, name, re.IGNORECASE)
+                    if match:
+                        location = match.group(1).strip()
+                        break
         dt = date or datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         # Ensure temperature values always have '°C'
         if metric.lower() in ["temperature", "room temperature", "temp"]:
@@ -5108,7 +5268,7 @@ class EnhancedAgenticInferrixAgent:
         """Get energy consumption for all devices in a location"""
         try:
             # Get all devices
-            devices_response = self._make_api_request("deviceInfos/all?pageSize=1000&page=0")
+            devices_response = self._make_api_request("user/devices?pageSize=1000&page=0")
             
             if not devices_response:
                 return f"❌ No devices found for location {location}"
@@ -5241,10 +5401,13 @@ class EnhancedAgenticInferrixAgent:
     def _get_all_devices_energy_consumption(self, energy_keys: list) -> str:
         """Get energy consumption for all devices"""
         try:
+            print(f"[DEBUG] Getting energy consumption for all devices with keys: {energy_keys}")
+            
             # Get all devices
-            devices_response = self._make_api_request("deviceInfos/all?pageSize=1000&page=0")
+            devices_response = self._make_api_request("user/devices?pageSize=1000&page=0")
             
             if not devices_response:
+                print("[DEBUG] No devices response received")
                 return "❌ No devices found"
             
             # Extract devices from response (API returns data in 'data' field)
@@ -5260,25 +5423,80 @@ class EnhancedAgenticInferrixAgent:
                 device_id = device.get('id', {}).get('id') if isinstance(device.get('id'), dict) else device.get('id')
                 device_name = device.get('name', 'Unknown')
                 
-                # Extract location from device name (e.g., "2F-Room50-Thermostat" -> "2F-Room50")
+                # Extract location from device name - Enhanced pattern matching
                 device_location = 'Unknown'
-                if device_name and '-' in device_name:
-                    # Try to extract location from device name patterns
-                    if '2F-' in device_name:
-                        # Extract room number from "2F-Room50-Thermostat" -> "2F-Room50"
+                if device_name:
+                    # Pattern 1: "2F-Room50-Thermostat" -> "2F-Room50"
+                    if '2F-' in device_name and 'Room' in device_name:
                         parts = device_name.split('-')
                         if len(parts) >= 2:
                             device_location = f"{parts[0]}-{parts[1]}"
+                    
+                    # Pattern 2: "Room 50" or "Room50" -> "Room 50"
                     elif 'Room' in device_name:
-                        # Extract room info from other patterns
                         room_match = re.search(r'(Room\s*\d+)', device_name)
                         if room_match:
                             device_location = room_match.group(1)
+                    
+                    # Pattern 3: "Floor" patterns -> "2nd Floor"
                     elif 'Floor' in device_name or 'floor' in device_name:
-                        # Extract floor info
                         floor_match = re.search(r'(\d+(?:st|nd|rd|th)?\s*floor)', device_name, re.IGNORECASE)
                         if floor_match:
                             device_location = floor_match.group(1)
+                    
+                    # Pattern 4: "IAQ Sensor V2 - 300180" -> Try to extract location from device properties
+                    elif 'IAQ Sensor' in device_name or 'Sensor' in device_name:
+                        # For sensors, try to get location from device properties if available
+                        if device_id:
+                            try:
+                                # Try to get device details to see if location is stored in properties
+                                device_details = self._make_api_request(f"user/devices/{device_id}")
+                                if device_details and isinstance(device_details, dict):
+                                    # Check for location in device properties
+                                    properties = device_details.get('properties', {})
+                                    if properties:
+                                        location_prop = properties.get('location') or properties.get('room') or properties.get('floor')
+                                        if location_prop:
+                                            device_location = str(location_prop)
+                            except:
+                                pass
+                        
+                        # If no location found in properties, try to extract from name
+                        if device_location == 'Unknown':
+                            # Try to extract any location-like pattern
+                            location_patterns = [
+                                r'(\d+(?:st|nd|rd|th)?\s*floor)',
+                                r'(room\s*\d+)',
+                                r'(building\s*\w+)',
+                                r'(area\s*\w+)',
+                                r'(wing\s*\w+)'
+                            ]
+                            for pattern in location_patterns:
+                                match = re.search(pattern, device_name, re.IGNORECASE)
+                                if match:
+                                    device_location = match.group(1).strip()
+                                    break
+                    
+                    # Pattern 5: Generic location extraction for any device
+                    else:
+                        # Try to extract any location-like pattern from device name
+                        location_patterns = [
+                            r'(\d+(?:st|nd|rd|th)?\s*floor)',
+                            r'(room\s*\d+)',
+                            r'(building\s*\w+)',
+                            r'(area\s*\w+)',
+                            r'(wing\s*\w+)',
+                            r'(\d+f)',  # 2F, 3F, etc.
+                            r'(\d+st)',  # 1st, 2nd, etc.
+                            r'(\d+nd)',
+                            r'(\d+rd)',
+                            r'(\d+th)'
+                        ]
+                        for pattern in location_patterns:
+                            match = re.search(pattern, device_name, re.IGNORECASE)
+                            if match:
+                                device_location = match.group(1).strip()
+                                break
                 
                 if device_id:
                     try:
