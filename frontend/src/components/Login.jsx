@@ -6,6 +6,16 @@ export default function Login({ onLoginSuccess }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  // Clear any stored email on component mount
+  React.useEffect(() => {
+    // Clear any stored email from localStorage
+    localStorage.removeItem("lastEmail");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("email");
+    // Clear any stored form data
+    sessionStorage.clear();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
