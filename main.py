@@ -252,10 +252,12 @@ def login(user: User):
                 else:
                     print(f"Warning: Inferrix login failed with status {inferrix_response.status_code}")
                     print(f"[DEBUG] Inferrix error response: {inferrix_response.text}")
+                    print("Note: User can still login to the application, but Inferrix API access will be limited")
                     return {"access_token": token, "token_type": "bearer"}
                     
             except Exception as e:
                 print(f"Warning: Error getting Inferrix token: {e}")
+                print("Note: User can still login to the application, but Inferrix API access will be limited")
                 return {"access_token": token, "token_type": "bearer"}
                 
         except Exception as e:
