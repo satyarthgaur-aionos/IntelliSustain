@@ -464,7 +464,8 @@ def health():
             "timestamp": time.time(),
             "version": "1.0.0",
             "database_available": DATABASE_AVAILABLE,
-            "ai_magic_available": AI_MAGIC_AVAILABLE
+            "ai_magic_available": AI_MAGIC_AVAILABLE,
+            "note": "Use /inferrix/devices or /inferrix/alarms with authentication for API testing"
         }
     except Exception as e:
         return JSONResponse(

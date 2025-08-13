@@ -1,0 +1,14 @@
+[1mdiff --git a/main.py b/main.py[m
+[1mindex b48e89a..46bd322 100644[m
+[1m--- a/main.py[m
+[1m+++ b/main.py[m
+[36m@@ -464,7 +464,8 @@[m [mdef health():[m
+             "timestamp": time.time(),[m
+             "version": "1.0.0",[m
+             "database_available": DATABASE_AVAILABLE,[m
+[31m-            "ai_magic_available": AI_MAGIC_AVAILABLE[m
+[32m+[m[32m            "ai_magic_available": AI_MAGIC_AVAILABLE,[m
+[32m+[m[32m            "note": "Use /inferrix/devices or /inferrix/alarms with authentication for API testing"[m
+         }[m
+     except Exception as e:[m
+         return JSONResponse([m
