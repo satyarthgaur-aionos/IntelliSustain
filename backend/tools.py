@@ -29,8 +29,6 @@ MCP_BASE_URL = os.getenv("MCP_BASE_URL", "http://localhost:8000")
 
 def get_inferrix_token():
     """Get fresh Inferrix API token - this function is deprecated since we now use localStorage tokens"""
-    print("[DEBUG] get_inferrix_token() called - this function is deprecated")
-    print("[DEBUG] Tokens should be obtained from localStorage in the frontend")
     return ""
 
 def get_inferrix_token_dynamic():
@@ -69,7 +67,6 @@ def fetch_alarms_from_mcp():
 
 def fetch_active_alarms(state):
     """Fetch and filter active alarms based on query parameters"""
-    print('fetch_active_alarms called with:', state)
     try:
         alarms = fetch_alarms_from_mcp()
         input_text = state.get("input", "").lower()
@@ -114,7 +111,6 @@ def fetch_active_alarms(state):
             "severity": severity,
             "alarms": filtered_severity
         }
-        print('fetch_active_alarms returning:', result, type(result))
         return str(result)
     except Exception as e:
         error_msg = f"❌ Error fetching alarms: {e}"
@@ -123,7 +119,6 @@ def fetch_active_alarms(state):
 
 def acknowledge_alarm(state):
     """Acknowledge a specific alarm by ID via MCP server"""
-    print('acknowledge_alarm called with:', state)
     try:
         input_text = state.get("input", "")
         # Extract alarm ID from input
@@ -139,7 +134,6 @@ def acknowledge_alarm(state):
         else:
             result = f"❌ Failed to acknowledge alarm {alarm_id}. Status: {response.status_code}"
         
-        print('acknowledge_alarm returning:', result, type(result))
         return str(result)
     except Exception as e:
         error_msg = f"❌ Error acknowledging alarm: {e}"
@@ -177,7 +171,6 @@ def extract_alarm_filters(input_text):
 
 def fetch_alarms_for_device_today(state):
     """Fetch alarms for a specific device with date and severity filters, or use last context if present"""
-    print('fetch_alarms_for_device_today called with:', state)
     try:
         # Use last context if present and input is a follow-up
         if state.get("last_alarm_query") and any(
@@ -223,7 +216,6 @@ def fetch_alarms_for_device_today(state):
             result = f"📝 Found {len(filtered)} alarms for device '{device or 'any'}' on {date_val or 'any date'} with severity {severity or 'any'}:\n" + "\n".join(details)
         else:
             result = f"✅ No alarms found for device '{device or 'any'}' on {date_val or 'any date'} with severity {severity or 'any'}. Please check the device name, date, or severity and try again."
-        print('fetch_alarms_for_device_today returning:', result)
         return str(result)
     except Exception as e:
         error_msg = f"❌ Error fetching device alarms: {e}"
@@ -236,7 +228,6 @@ def fetch_temperature(state):
     try:
         device = state.get("device")
         input_text = state.get("input", "")
-        print(f"[DEBUG] Incoming device value: {device}")
         if not device:
             filters = extract_alarm_filters(input_text)
             device = filters.get('device')
@@ -252,12 +243,10 @@ def fetch_temperature(state):
         response = requests.get(f"{MCP_BASE_URL}/inferrix/devices", timeout=10)
         response.raise_for_status()
         devices = response.json().get("data", [])
-        print(f"[DEBUG] Device list: {[d.get('name') for d in devices]}")
         device_info = None
         for d in devices:
             d_id = d.get("id")
             d_id_str = d_id.get("id") if isinstance(d_id, dict) else d_id
-            print(f"[DEBUG] Comparing device '{device}' to d_id_str '{d_id_str}' for device '{d.get('name')}'")
             # Ensure both are strings and compare
             if str(device).strip() == str(d_id_str).strip():
                 device_info = d
@@ -440,7 +429,6 @@ def fetch_device_telemetry(state):
     try:
         device_query = state.get("device")
         input_text = state.get("input", "")
-        print(f"[DEBUG] Incoming device value: {device_query}")
         key = None
         for k in ["temperature", "humidity", "battery", "occupancy", "motion"]:
             if k in input_text.lower():
@@ -458,12 +446,10 @@ def fetch_device_telemetry(state):
         response = requests.get(f"{MCP_BASE_URL}/inferrix/devices", timeout=10)
         response.raise_for_status()
         devices = response.json().get("data", [])
-        print(f"[DEBUG] Device list: {[d.get('name') for d in devices]}")
         device_info = None
         for d in devices:
             d_id = d.get("id")
             d_id_str = d_id.get("id") if isinstance(d_id, dict) else d_id
-            print(f"[DEBUG] Comparing device_query '{device_query}' to d_id_str '{d_id_str}' for device '{d.get('name')}'")
             # Ensure both are strings and compare
             if str(device_query).strip() == str(d_id_str).strip():
                 device_info = d

@@ -144,11 +144,8 @@ def chat(prompt: Prompt, request: Request, current_user=Depends(get_current_user
         if not prompt.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
         
-        # Debug logging for POST body
-        print(f"[DEBUG] POST body received:")
-        print(f"  - query: '{prompt.query}'")
-        print(f"  - user: '{prompt.user}'")
-        print(f"  - device: '{prompt.device}'")
+        # Minimal logging for POST body
+        print(f"[DEBUG] Chat request from user: {prompt.user}")
         
         # Get the Inferrix token from the request headers
         inferrix_token = None
@@ -162,19 +159,15 @@ def chat(prompt: Prompt, request: Request, current_user=Depends(get_current_user
             # If device is selected, modify the query to include device context
             device_context = f" (Device ID: {prompt.device})"
             enhanced_query = prompt.query + device_context
-            print(f"[DEBUG] Enhanced query with device: '{enhanced_query}'")
             agent = get_enhanced_agentic_agent()
             response = agent.process_query(enhanced_query, prompt.user, prompt.device, inferrix_token)
         else:
-            print(f"[DEBUG] No device selected, using original query")
             agent = get_enhanced_agentic_agent()
             response = agent.process_query(prompt.query, prompt.user, "", inferrix_token)
         
         # Always return a string
         if not response:
             response = "No data found or unable to answer your query."
-        
-        print(f"[DEBUG] Final response: {response[:100]}...")
         
         return {
             "response": response, 
@@ -197,18 +190,14 @@ def enhanced_chat(prompt: Prompt, request: Request, current_user=Depends(get_cur
         if not prompt.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
         
-        # Debug logging for POST body
-        print(f"[DEBUG] Enhanced chat - POST body received:")
-        print(f"  - query: '{prompt.query}'")
-        print(f"  - user: '{prompt.user}'")
-        print(f"  - device: '{prompt.device}'")
+        # Minimal logging for enhanced chat
+        print(f"[DEBUG] Enhanced chat request from user: {prompt.user}")
         
         # Get the Inferrix token from the request headers
         inferrix_token = None
         auth_header = request.headers.get("X-Inferrix-Token")
         if auth_header:
             inferrix_token = auth_header
-            print(f"[DEBUG] Enhanced chat - Token received: {inferrix_token[:50]}...")
         else:
             print("[DEBUG] Enhanced chat - No X-Inferrix-Token header found")
         
@@ -219,8 +208,6 @@ def enhanced_chat(prompt: Prompt, request: Request, current_user=Depends(get_cur
         # Always return a string
         if not response:
             response = "No data found or unable to answer your query."
-        
-        print(f"[DEBUG] Enhanced chat - Final response: {response[:100]}...")
         
         return {
             "response": response, 

@@ -120,7 +120,6 @@ def normalize_location_name(text):
     room = re.search(r'room\s*(\d+)', text)
     if floor and room:
         canonical = f"{floor.group(1)}froom{room.group(1)}"
-        print(f"[DEBUG] normalize_location_name: '{text}' -> '{canonical}' (matched floor+room any order)")
         return canonical
     # Enhanced: handle 'room 50 on 2f', 'room 50 at 2f', etc.
     match = re.search(r'room\s*(\d+)\s*(?:on|at|in)?\s*(\d+)f', text)
@@ -128,7 +127,6 @@ def normalize_location_name(text):
         floor = match.group(2)
         room = match.group(1)
         canonical = f"{floor}froom{room}"
-        print(f"[DEBUG] normalize_location_name: '{text}' -> '{canonical}' (matched 'room X on Yf')")
         return canonical
     # Reorder to canonical: floor, room, lot, plant, etc.
     floor = re.search(r'(\d+)\s*f', text)
@@ -146,13 +144,10 @@ def normalize_location_name(text):
         canonical += f"plant{plant.group(1)}"
     if not canonical:
         canonical = text.replace(' ', '')
-    print(f"[DEBUG] normalize_location_name: '{text}' -> '{canonical}'")
     return canonical
 
 # Get Inferrix API token - this function is deprecated since we now use localStorage tokens
 def get_inferrix_token():
-    print("[DEBUG] get_inferrix_token() called - this function is deprecated")
-    print("[DEBUG] Tokens should be obtained from localStorage in the frontend")
     return ""
 
 # Enhanced API endpoints based on user requirements
@@ -993,7 +988,6 @@ class EnhancedAgenticInferrixAgent:
         # PATCH: Battery status direct handling (handle 'low battery' and similar queries FIRST)
         battery_keywords_direct = ['low battery', 'devices with low battery', 'show low battery', 'battery status', 'battery level']
         if any(word in user_query.lower() for word in battery_keywords_direct):
-            print("[DEBUG] Battery keyword detected, routing to _get_battery_status_all_devices")
             return self._get_battery_status_all_devices({'query': user_query})
 
         # PATCH: Set temperature command handling
@@ -1348,7 +1342,6 @@ class EnhancedAgenticInferrixAgent:
             'system health', 'system status', 'all systems fine', 'all systems ok', 'is everything working', 'is health of all systems fine', 'are all systems ok', 'system communication status', 'overall health', 'building health', 'is health of all systems good', 'is health of all systems ok', 'is health of all systems', 'is system healthy', 'is everything ok', 'is everything fine', 'is everything normal', 'is system ok', 'is system fine', 'is system normal'
         ]
         if any(kw in user_query.lower() for kw in health_keywords):
-            print("[DEBUG] General health/system status query detected, routing to _get_system_communication_status")
             return self._get_system_communication_status({'query': user_query})
         
         # --- Predictive maintenance/analytics direct handling (enhanced) ---
@@ -1372,7 +1365,6 @@ class EnhancedAgenticInferrixAgent:
                     if ' or ' in raw_system_type:
                         # Extract the first system type (usually the primary one)
                         system_type = raw_system_type.split(' or ')[0].strip()
-                        print(f"[DEBUG] Compound system type detected: '{raw_system_type}' -> using '{system_type}'")
                     else:
                         system_type = raw_system_type
                 
@@ -1385,7 +1377,6 @@ class EnhancedAgenticInferrixAgent:
                 else:
                     days = int(days_raw)
                 
-                print(f"[DEBUG] Predictive maintenance pattern matched: system_type={system_type}, days={days}")
                 return self._get_predictive_maintenance_summary(system_type=system_type, days=days)
         
         # Enhanced fallback: broader keyword detection
@@ -1407,7 +1398,6 @@ class EnhancedAgenticInferrixAgent:
             elif 'today' in user_query.lower():
                 days = 0
             
-            print(f"[DEBUG] Predictive maintenance keyword detected, routing to _get_predictive_maintenance_summary (days={days})")
             return self._get_predictive_maintenance_summary(system_type='all', days=days)
         
         # PATCH: Alarm-related queries
@@ -1420,7 +1410,6 @@ class EnhancedAgenticInferrixAgent:
         alarm_keywords_for_troubleshooting = ['alarm', 'alarms', 'co2', 'filter', 'choke', 'pressure', 'temperature', 'humidity', 'battery', 'communication', 'sensor']
         
         if any(word in user_query.lower() for word in troubleshooting_keywords) and any(word in user_query.lower() for word in alarm_keywords_for_troubleshooting):
-            print("[DEBUG] Troubleshooting query detected, extracting alarm type")
             # Extract alarm type from query
             alarm_type = ""
             for word in user_query.lower().split():
@@ -1451,7 +1440,6 @@ class EnhancedAgenticInferrixAgent:
                 else:
                     alarm_type = 'general'
             
-            print(f"[DEBUG] Extracted alarm type: {alarm_type}")
             return self._get_troubleshooting_steps(alarm_type)
         
         # PATCH: General alarm detection (AFTER troubleshooting detection)
@@ -1469,12 +1457,10 @@ class EnhancedAgenticInferrixAgent:
                 result = self._get_enhanced_alarms(args)
                 return result
             except Exception as e:
-                print(f"[DEBUG] Exception in process_query alarm handler: {str(e)}")
                 return f"❌ Error processing alarm query: {str(e)}"
         # PATCH: Fan speed telemetry queries
         fan_speed_telemetry_keywords = ['fan speed', 'speed of', 'current speed', 'what is the speed']
         if any(word in user_query.lower() for word in fan_speed_telemetry_keywords) and not is_fan_speed_control:
-            print("[DEBUG] Fan speed telemetry query detected")
             device_phrase = device or user_query
             device_id = self._map_device_name_to_id(device_phrase)
             if device_id:
@@ -1505,13 +1491,11 @@ class EnhancedAgenticInferrixAgent:
         # PATCH: Device inventory/listing queries
         device_list_keywords = ['all devices', 'list devices', 'show devices', 'active devices', 'device inventory', 'available devices', 'device list']
         if any(word in user_query.lower() for word in device_list_keywords):
-            print("[DEBUG] Device inventory/listing keyword detected, routing to _get_devices_list")
             devices = self._get_devices_list()
             return self._format_full_device_summary(devices)
         # PATCH: System communication status direct handling
         communication_keywords = ['communication', 'system communication', 'connection', 'connectivity']
         if any(word in user_query.lower() for word in communication_keywords):
-            print("[DEBUG] Communication keyword detected, routing to _get_system_communication_status")
             return self._get_system_communication_status({'query': user_query})
         
         # PATCH: Energy consumption queries
@@ -1519,7 +1503,6 @@ class EnhancedAgenticInferrixAgent:
                           'power usage', 'energy data', 'power data', 'kwh', 'voltage', 'current', 
                           'energy efficiency', 'energy consumption', 'power consumption']
         if any(word in user_query.lower() for word in energy_keywords):
-            print("[DEBUG] Energy consumption keyword detected, routing to _get_energy_consumption_data")
             
             # Extract device or location from query
             device_id = None
@@ -1645,13 +1628,11 @@ class EnhancedAgenticInferrixAgent:
         # PATCH: Air Quality/CO2/PM direct handling
         air_quality_keywords = ['co2', 'air quality', 'pm2.5', 'pm10', 'aqi']
         if any(word in user_query.lower() for word in air_quality_keywords):
-            print("[DEBUG] Air quality/CO2/PM keyword detected, routing to _get_enhanced_alarms")
             return self._get_enhanced_alarms({'type': 'air_quality', 'query': user_query})
         
         # PATCH: Hindi/Hinglish temperature queries
         hindi_temp_keywords = ['taapman', 'tapmaan', 'taapmaan', 'tapman', 'तापमान']
         if any(word in user_query.lower() for word in hindi_temp_keywords):
-            print("[DEBUG] Hindi temperature keyword detected")
             # Apply Hindi word mapping to get English equivalent
             mapped_query = map_hindi_to_english(user_query)
             # Extract location from the query
@@ -1715,8 +1696,6 @@ class EnhancedAgenticInferrixAgent:
                 else:
                     return f"❌ Device '{device_id}' not found. Please check the spelling, try another device, or select from the available device list."
             
-            print(f"[DEBUG] Fetching telemetry for device {device_id}, key: {key}")
-            
             # Enhanced fallback keys for common telemetry naming variations
             fallback_keys = {
                 'temperature': ['temperature', 'room temperature', 'temp', 'current temperature', 'measured temperature', 'ambient temperature', 'Temperature', 'Room Temperature', 'room_temperature', 'current_temp'],
@@ -1729,7 +1708,6 @@ class EnhancedAgenticInferrixAgent:
             # First, get all available keys for this device
             all_keys_endpoint = f"plugins/telemetry/DEVICE/{device_id}/keys/timeseries"
             all_keys = self._make_api_request(all_keys_endpoint)
-            print(f"[DEBUG] Available keys for device {device_id}: {all_keys}")
             
             if isinstance(all_keys, list) and all_keys:
                 # Try to find the exact key or similar keys
@@ -1745,26 +1723,21 @@ class EnhancedAgenticInferrixAgent:
                     try:
                         endpoint = f"plugins/telemetry/DEVICE/{device_id}/values/timeseries?keys={matching_key}"
                         telemetry_data = self._make_api_request(endpoint)
-                        print(f"[DEBUG] Telemetry data for {matching_key}: {telemetry_data}")
                         
                         if isinstance(telemetry_data, dict) and matching_key in telemetry_data and telemetry_data[matching_key]:
                             value = telemetry_data[matching_key]
                             if isinstance(value, list) and len(value) > 0:
                                 result = value[0].get('value', None)
                                 if result is not None and result != 'None':
-                                    print(f"[DEBUG] Found value for {matching_key}: {result}")
                                     return str(result)
                             elif isinstance(value, dict):
                                 result = value.get('value', None)
                                 if result is not None and result != 'None':
-                                    print(f"[DEBUG] Found value for {matching_key}: {result}")
                                     return str(result)
                             else:
                                 if value is not None and value != 'None':
-                                    print(f"[DEBUG] Found value for {matching_key}: {value}")
                                     return str(value)
                     except Exception as e:
-                        print(f"[DEBUG] Error trying key {matching_key}: {str(e)}")
                         continue
                 
                 # Try fallback keys if no matching keys found
@@ -1774,30 +1747,24 @@ class EnhancedAgenticInferrixAgent:
                             try:
                                 fallback_endpoint = f"plugins/telemetry/DEVICE/{device_id}/values/timeseries?keys={fallback_key}"
                                 fallback_data = self._make_api_request(fallback_endpoint)
-                                print(f"[DEBUG] Fallback data for {fallback_key}: {fallback_data}")
                                 
                                 if isinstance(fallback_data, dict) and fallback_key in fallback_data and fallback_data[fallback_key]:
                                     value = fallback_data[fallback_key]
                                     if isinstance(value, list) and len(value) > 0:
                                         result = value[0].get('value', None)
                                         if result is not None and result != 'None':
-                                            print(f"[DEBUG] Found fallback value for {fallback_key}: {result}")
                                             return str(result)
                                     elif isinstance(value, dict):
                                         result = value.get('value', None)
                                         if result is not None and result != 'None':
-                                            print(f"[DEBUG] Found fallback value for {fallback_key}: {result}")
                                             return str(result)
                                     else:
                                         if value is not None and value != 'None':
-                                            print(f"[DEBUG] Found fallback value for {fallback_key}: {value}")
                                             return str(value)
                             except Exception as e:
-                                print(f"[DEBUG] Error trying fallback key {fallback_key}: {str(e)}")
                                 continue
             
             # If still no data found, provide detailed diagnostic information
-            print(f"[DEBUG] No telemetry data found for device {device_id}, key: {key}")
             
             # --- SUGGEST SIMILAR DEVICES WITH THE REQUESTED METRIC ---
             # Get all devices and check which ones have the requested key
@@ -1819,7 +1786,7 @@ class EnhancedAgenticInferrixAgent:
                         elif name:
                             similar_devices.append(name)
             except Exception as e:
-                print(f"[DEBUG] Error finding similar devices: {str(e)}")
+                pass
             suggestion = ""
             if similar_devices:
                 suggestion = f"\n\n💡 **Other devices with '{key}' metric:** {', '.join(similar_devices[:5])}"
@@ -1831,7 +1798,6 @@ class EnhancedAgenticInferrixAgent:
             else:
                 return f"❌ **Device offline or no telemetry data** for device {device_id}.\n\n🔍 **Possible issues:**\n• Device is offline\n• Device not reporting data\n• No telemetry configured\n\n💡 **Try:** 'Show device status' or 'List all devices'{suggestion}"
         except Exception as e:
-            print(f"[DEBUG] Exception in _get_device_telemetry_data: {str(e)}")
             return f"❌ Error fetching telemetry data: {str(e)}. Please check your connection to Inferrix API or contact support."
     
     def _check_device_status(self, args: Dict) -> str:
@@ -2164,7 +2130,6 @@ class EnhancedAgenticInferrixAgent:
                     return device.get('name', '')
             return None
         except Exception as e:
-            print(f"[DEBUG] Error getting device name for {device_id}: {e}")
             return None
 
     def _get_devices_list(self) -> List[Dict]:
@@ -2202,7 +2167,6 @@ class EnhancedAgenticInferrixAgent:
             return []
     
     def _get_devices_for_location(self, location: str, require_temperature: bool = False) -> list:
-        print(f"[DEBUG] _get_devices_for_location CALLED with location: '{location}', require_temperature: {require_temperature}")
         import difflib
         import re
         location_norm = normalize_location_name(location)
@@ -2233,7 +2197,6 @@ class EnhancedAgenticInferrixAgent:
             location_candidates.append(location_value)
             device_location_map.setdefault(location_value, []).append(device_id)
             norm_loc_val = normalize_location_name(location_value)
-            print(f"[DEBUG] Comparing user '{location_norm}' with device '{norm_loc_val}' (raw: '{location_value}')")
             # Robust match: check for room+floor, allow 'thermostat'/'fcu' fallback
             if location_norm in norm_loc_val or norm_loc_val in location_norm:
                 if require_temperature:
@@ -2263,7 +2226,6 @@ class EnhancedAgenticInferrixAgent:
                                     min_diff = diff
                                     closest = d
                         if closest:
-                            print(f"[DEBUG] Fuzzy closest room on floor: {closest.get('name','')}")
                             matched_devices.append(closest.get('id'))
                     else:
                         matched_devices.append(floor_devices[0].get('id'))
@@ -2276,34 +2238,27 @@ class EnhancedAgenticInferrixAgent:
                 floor_devices = [d for d in devices if floor_pattern in normalize_location_name(d.get('name',''))]
                 if floor_devices:
                     room_names = [d.get('name','') for d in floor_devices]
-                    print(f"[DEBUG] No match found. Suggesting available rooms on floor {floor}: {room_names}")
                     self.last_available_locations = room_names
                     return []
             room_names = [d for d in location_candidates]
-            print(f"[DEBUG] No match found. Suggesting all available rooms: {room_names}")
             self.last_available_locations = room_names[:20]
-        print(f"[DEBUG] Location query '{location}' matched device IDs (by attribute or name): {matched_devices}")
         return matched_devices
 
     def _map_device_name_to_id(self, device_name: str) -> Optional[str]:
-        print(f"[DEBUG] _map_device_name_to_id CALLED with device_name: '{device_name}'")
         if not device_name:
             return None
         
         # Get all devices
         devices = self._get_devices_list() or []
-        print(f"[DEBUG] Found {len(devices)} devices to check")
         
         # PATCH: Room alias mapping
         device_name_lower = device_name.lower()
         if device_name_lower in self.ROOM_ALIASES:
-            print(f"[DEBUG] Room alias detected: '{device_name_lower}' -> '{self.ROOM_ALIASES[device_name_lower]}'")
             device_name = self.ROOM_ALIASES[device_name_lower]
         
         # PRIORITY 1: LOCATION-BASED MATCHING (Most common user scenario)
         # Users typically ask: "temperature in room 201", "thermostat at 3rd floor", etc.
         normalized_input = normalize_location_name(device_name)
-        print(f"[DEBUG] Normalized input for location matching: '{normalized_input}'")
         
         # Create location mapping
         norm_map = {}
@@ -2314,19 +2269,16 @@ class EnhancedAgenticInferrixAgent:
                 device_id = device_id.get('id', '')
             norm_name = normalize_location_name(name)
             norm_map.setdefault(norm_name, []).append((device_id, name))
-            print(f"[DEBUG] Device '{name}' normalizes to '{norm_name}'")
         
         # 1a. Exact location match
         if normalized_input in norm_map:
             best = sorted(norm_map[normalized_input], key=lambda x: x[1])[0][0]
-            print(f"[DEBUG] Exact location match: '{normalized_input}' -> {best}")
             return best
         
         # 1b. Substring location match
         for norm_name, devs in norm_map.items():
             if normalized_input in norm_name or norm_name in normalized_input:
                 best = sorted(devs, key=lambda x: x[1])[0][0]
-                print(f"[DEBUG] Substring location match: '{normalized_input}' in '{norm_name}' -> {best}")
                 return best
         
         # 1c. Enhanced substring matching for room numbers
@@ -2338,7 +2290,6 @@ class EnhancedAgenticInferrixAgent:
                 for norm_name, devs in norm_map.items():
                     if f'room{room_number}' in norm_name:
                         best = sorted(devs, key=lambda x: x[1])[0][0]
-                        print(f"[DEBUG] Room number match: 'room{room_number}' in '{norm_name}' -> {best}")
                         return best
         
         # 1c. Floor-based fuzzy matching (e.g., "3rd floor room 50")
@@ -2361,7 +2312,6 @@ class EnhancedAgenticInferrixAgent:
                                 min_diff = diff
                                 closest = d
                     if closest:
-                        print(f"[DEBUG] Fuzzy closest room on floor: {closest.get('name','')}")
                         return closest.get('id')
                 # If no room number, just return first device on floor
                 return floor_devices[0].get('id')
@@ -2376,7 +2326,6 @@ class EnhancedAgenticInferrixAgent:
                 device_id = device.get('id')
                 if isinstance(device_id, dict):
                     device_id = device_id.get('id', '')
-                print(f"[DEBUG] Exact device name match: '{device_name}' -> {device_id}")
                 return device_id
         
         # 2b. Partial device name match
@@ -2386,7 +2335,6 @@ class EnhancedAgenticInferrixAgent:
                 device_id = device.get('id')
                 if isinstance(device_id, dict):
                     device_id = device_id.get('id', '')
-                print(f"[DEBUG] Partial device name match: '{device_name}' in '{name}' -> {device_id}")
                 return device_id
         
         # PRIORITY 3: DEVICE ID MATCHING (Rare - when user specifies exact ID)
@@ -2394,7 +2342,6 @@ class EnhancedAgenticInferrixAgent:
         device_id_match = re.search(r'(\d{6,})', device_name)
         if device_id_match:
             potential_device_id = device_id_match.group(1)
-            print(f"[DEBUG] Found potential device ID in name: {potential_device_id}")
             
             # Verify this device ID exists in our device list
             for device in devices:
@@ -2402,12 +2349,10 @@ class EnhancedAgenticInferrixAgent:
                 if isinstance(device_id, dict):
                     device_id = device_id.get('id', '')
                 if device_id and str(device_id) == potential_device_id:
-                    print(f"[DEBUG] Confirmed device ID {potential_device_id} exists in device list")
                     return potential_device_id
                 # Also check if the device name contains this ID
                 name = device.get('name', '')
                 if potential_device_id in name:
-                    print(f"[DEBUG] Found device with ID {potential_device_id} in name: {name}")
                     return potential_device_id
         
         # 3b. Exact device ID match
@@ -2416,7 +2361,6 @@ class EnhancedAgenticInferrixAgent:
             if isinstance(device_id, dict):
                 device_id = device_id.get('id', '')
             if device_id and device_id.lower() == device_name.lower():
-                print(f"[DEBUG] Exact device ID match: '{device_name}' -> {device_id}")
                 return device_id
         
         # PRIORITY 4: FUZZY MATCHING (Last resort)
@@ -2429,18 +2373,10 @@ class EnhancedAgenticInferrixAgent:
                     device_id = device.get('id')
                     if isinstance(device_id, dict):
                         device_id = device_id.get('id', '')
-                    print(f"[DEBUG] Fuzzy match: '{device_name}' -> '{matches[0]}' -> {device_id}")
                     return device_id
         
         # ERROR: No match found - provide helpful suggestions
         self.last_available_devices = [d.get('name', '') for d in devices]
-        
-        # Debug: Show all available devices and their normalized names
-        print(f"[DEBUG] Available devices and their normalized names:")
-        for device in devices:
-            name = device.get('name', '')
-            norm_name = normalize_location_name(name)
-            print(f"[DEBUG]   '{name}' -> '{norm_name}'")
         
         # Suggest floor-specific rooms if floor was mentioned
         if floor_match and devices:
@@ -2449,16 +2385,13 @@ class EnhancedAgenticInferrixAgent:
             floor_devices = [d for d in devices if floor_pattern in normalize_location_name(d.get('name',''))]
             if floor_devices:
                 room_names = [d.get('name','') for d in floor_devices]
-                print(f"[DEBUG] No match found. Suggesting available rooms on floor {floor}: {room_names}")
                 raise Exception(f"❌ No device found for '{device_name}' on {floor}F. Available rooms on {floor}F: {', '.join(room_names)}")
         
         # Suggest all available devices
         if devices:
             device_names = [d.get('name', '') for d in devices]
-            print(f"[DEBUG] No match found. Suggesting available devices: {device_names}")
             raise Exception(f"❌ No device found for '{device_name}'. Available devices: {', '.join(device_names[:20])}")
         
-        print(f"[DEBUG] No match found. No devices available.")
         raise Exception(f"❌ No device found for '{device_name}'. No devices available in the system.")
     
     def _make_api_request(self, endpoint: str, method: str = "GET", data: Optional[Dict] = None, token: str = None) -> Dict:
@@ -2475,12 +2408,9 @@ class EnhancedAgenticInferrixAgent:
                 response = requests.get(url, headers=headers, params=data, timeout=10)
             else:
                 response = requests.post(url, headers=headers, json=data, timeout=10)
-            print(f"[DEBUG] HTTP {method} {url} - Status: {response.status_code}")
-            print(f"[DEBUG] Response body: {response.text}")
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            print(f"[DEBUG] API request exception: {str(e)}")
             # PATCH: Special handling for 401 token expired
             if '401' in str(e) or 'Token has expired' in str(e):
                 return {"error": str(e), "message": "API token expired or unauthorized. Please log in again or refresh your token.", "suggestion": "Re-login or refresh token."}
@@ -2926,19 +2856,14 @@ class EnhancedAgenticInferrixAgent:
             }
             endpoint = "v2/alarms"
             import urllib.parse
-            debug_url = f"{INFERRIX_BASE_URL}/{endpoint}?" + urllib.parse.urlencode(params)
-            print(f"[DEBUG] Enhanced alarms API request: {debug_url}")
             alarms_data = self._make_api_request(endpoint, method="GET", data=params)
-            print(f"[DEBUG] Raw alarms_data: {alarms_data}")
             if isinstance(alarms_data, dict) and 'error' in alarms_data:
                 error_msg = alarms_data.get('error', 'Unknown error')
                 # PATCH: Special handling for 401 token expired
                 if '401' in error_msg or 'Token has expired' in str(alarms_data):
-                    print(f"[DEBUG] API token expired or unauthorized. Suggest re-login.")
                     return ("❌ Your session has expired or the API token is invalid.\n"
                             "- Please log in again or refresh your API token.\n"
                             "- If the problem persists, contact your administrator.")
-                print(f"[DEBUG] API error response: {error_msg}")
                 return ("❌ Alarm data is currently unavailable due to a server or network issue.\n"
                         f"- Technical details: {error_msg}\n"
                         "- Please check your connection or try again in a few minutes.\n"
@@ -2949,7 +2874,6 @@ class EnhancedAgenticInferrixAgent:
                 alarms = alarms_data
             else:
                 alarms = []
-            print(f"[DEBUG] Alarms after API fetch: {len(alarms)}")
             # Python-side filtering for severity, CO2, device, etc.
             user_query = args.get('user_query', '').lower() if args.get('user_query') else ''
             # PATCH: Device filtering
@@ -2957,7 +2881,6 @@ class EnhancedAgenticInferrixAgent:
             device_match = re.search(r'(?:for|of|in|at)\s+([\w\-/ ]+\d+)', user_query)
             device_phrase = device_match.group(1).strip() if device_match else ''
             if device_phrase:
-                print(f"[DEBUG] Device phrase detected in query: '{device_phrase}'")
                 # Try to match device by name or ID
                 devices = self._get_devices_list() or []
                 matched_names = [d for d in devices if device_phrase.lower() in d.get('name','').lower()]
@@ -2966,16 +2889,12 @@ class EnhancedAgenticInferrixAgent:
                 if matched:
                     matched_names_set = set([d.get('name','') for d in matched])
                     alarms = [a for a in alarms if a.get('originatorName','') in matched_names_set or a.get('originatorLabel','') in matched_names_set]
-                    print(f"[DEBUG] Alarms after device filter: {len(alarms)}")
             if 'critical' in user_query:
                 alarms = [a for a in alarms if a.get('severity', '').upper() == 'CRITICAL']
-                print(f"[DEBUG] Alarms after critical filter: {len(alarms)}")
             if 'minor' in user_query:
                 alarms = [a for a in alarms if a.get('severity', '').upper() == 'MINOR']
-                print(f"[DEBUG] Alarms after minor filter: {len(alarms)}")
             if 'major' in user_query:
                 alarms = [a for a in alarms if a.get('severity', '').upper() == 'MAJOR']
-                print(f"[DEBUG] Alarms after major filter: {len(alarms)}")
             # PATCH: Broadened filtering for sensor types (CO2, air quality, PM2.5, PM10, battery, filter, temperature, etc.)
             def alarm_matches_keywords(alarm, keywords):
                 for field in ['type', 'name', 'details', 'originatorName', 'originatorLabel']:
@@ -2987,25 +2906,18 @@ class EnhancedAgenticInferrixAgent:
                 return False
             if any(phrase in user_query for phrase in ['co2', 'carbon dioxide']):
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['co2', 'carbon dioxide'])]
-                print(f"[DEBUG] Alarms after CO2 filter: {len(alarms)}")
             if any(phrase in user_query for phrase in ['air quality', 'aqi']):
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['air quality', 'aqi'])]
-                print(f"[DEBUG] Alarms after air quality filter: {len(alarms)}")
             if any(phrase in user_query for phrase in ['pm2.5', 'pm 2.5']):
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['pm2.5', 'pm 2.5'])]
-                print(f"[DEBUG] Alarms after PM2.5 filter: {len(alarms)}")
             if any(phrase in user_query for phrase in ['pm10', 'pm 10']):
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['pm10', 'pm 10'])]
-                print(f"[DEBUG] Alarms after PM10 filter: {len(alarms)}")
             if any(phrase in user_query for phrase in ['battery', 'low battery']):
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['battery', 'low battery'])]
-                print(f"[DEBUG] Alarms after battery filter: {len(alarms)}")
             if any(phrase in user_query for phrase in ['filter', 'filter choke', 'choke']):
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['filter', 'filter choke', 'choke'])]
-                print(f"[DEBUG] Alarms after filter/choke filter: {len(alarms)}")
             if any(phrase in user_query for phrase in ['temperature', 'temp']):
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['temperature', 'temp'])]
-                print(f"[DEBUG] Alarms after temperature filter: {len(alarms)}")
             if 'today' in user_query:
                 import datetime
                 now = datetime.datetime.now()
@@ -3013,8 +2925,6 @@ class EnhancedAgenticInferrixAgent:
                 start_ts = int(start_of_day.timestamp() * 1000)
                 end_ts = int(now.timestamp() * 1000)
                 alarms = [a for a in alarms if start_ts <= a.get('createdTime', 0) <= end_ts]
-                print(f"[DEBUG] Alarms after today filter: {len(alarms)}")
-            print(f"[DEBUG] Enhanced alarms after Python filtering: {len(alarms)}")
             
             # Check if user is asking for highest severity/priority alarms
             highest_severity_keywords = ['highest severity', 'highest priority', 'highest risk', 'most critical', 'top priority', 'critical alarms', 'severity alarm', 'priority alarm']
@@ -3026,10 +2936,8 @@ class EnhancedAgenticInferrixAgent:
             
             if alarms:
                 if is_highest_severity_query:
-                    print("[DEBUG] Highest severity query detected, using _format_enhanced_alarm_summary")
                     return self._format_enhanced_alarm_summary(alarms)
                 elif is_lowest_severity_query:
-                    print("[DEBUG] Lowest severity query detected, filtering for MINOR alarms")
                     # Filter for MINOR alarms only (lowest severity currently in database)
                     minor_alarms = [a for a in alarms if a.get('severity', '').upper() == 'MINOR']
                     if minor_alarms:
@@ -3037,7 +2945,6 @@ class EnhancedAgenticInferrixAgent:
                     else:
                         return "✅ **No minor severity alarms found!**\n\nAll systems are operating with higher priority issues or no alarms at all."
                 else:
-                    print("[DEBUG] Regular alarm query, using _format_enhanced_alarm_summary_with_reasoning")
                     return self._format_enhanced_alarm_summary_with_reasoning(alarms)
             else:
                 return ("✅ **All systems are functioning properly!**\n\nNo active alarms found across the entire building, which indicates:\n"
@@ -3046,7 +2953,6 @@ class EnhancedAgenticInferrixAgent:
                         "• No maintenance issues detected\n"
                         "• Building systems are healthy and performing optimally")
         except Exception as e:
-            print(f"[DEBUG] Exception in _get_enhanced_alarms: {str(e)}")
             return f"❌ Error fetching enhanced alarms: {str(e)}"
 
     def _get_device_attributes(self, args: Dict) -> str:
@@ -4590,16 +4496,13 @@ class EnhancedAgenticInferrixAgent:
             import urllib.parse
             debug_params = params.copy()
             debug_url = f"{INFERRIX_BASE_URL}/{endpoint}?" + urllib.parse.urlencode(debug_params)
-            print(f"[DEBUG] Alarm API request: {debug_url}")
             try:
                 alarms_data = self._make_api_request(endpoint, method="GET", data=params)
             except Exception as api_exc:
-                print(f"[DEBUG] Exception during API request: {api_exc}")
                 return f"❌ Alarm data is currently unavailable due to a server or network issue.\n- Technical details: {api_exc}\n- Request: {debug_url}\n- Please check your connection or try again in a few minutes.\n- If the problem persists, contact Inferrix support."
             # Handle 500 error or error in response
             if isinstance(alarms_data, dict) and 'error' in alarms_data:
                 error_msg = alarms_data.get('error', 'Unknown error')
-                print(f"[DEBUG] API error response: {error_msg}")
                 return ("❌ Alarm data is currently unavailable due to a server or network issue.\n"
                         f"- Technical details: {error_msg}\n"
                         f"- Request: {debug_url}\n"
@@ -4611,7 +4514,6 @@ class EnhancedAgenticInferrixAgent:
                 alarms = alarms_data
             else:
                 alarms = []
-            print(f"[DEBUG] Alarms after API fetch: {len(alarms)}")
             # Now filter alarms in Python
             # Only filter out cleared alarms for non-historical queries
             if not is_historical_query:
@@ -4638,12 +4540,9 @@ class EnhancedAgenticInferrixAgent:
                 start_ts = int(start_of_day.timestamp() * 1000)
                 end_ts = int(now.timestamp() * 1000)
                 alarms = [a for a in alarms if start_ts <= a.get('createdTime', 0) <= end_ts]
-                print(f"[DEBUG] Alarms after today filter: {len(alarms)}")
             # PATCH: CO2 and air quality filtering
             if any(phrase in user_query for phrase in ['co2', 'carbon dioxide']):
                 alarms = [a for a in alarms if 'co2' in a.get('type', '').lower() or 'carbon dioxide' in a.get('type', '').lower()]
-                print(f"[DEBUG] Alarms after CO2 filter: {len(alarms)}")
-            print(f"[DEBUG] Final filtered alarms count: {len(alarms)}")
             # --- PATCH: Always show alarms if present ---
             if alarms:
                 return self._format_enhanced_alarm_summary_with_reasoning(alarms, entity_id, user_query)
@@ -4690,7 +4589,6 @@ class EnhancedAgenticInferrixAgent:
                         elif filter_type == 'temperature' and ('temperature' in alarm_type_lower or 'temp' in alarm_type_lower):
                             filtered_alarms.append(alarm)
                             break
-                print(f"[DEBUG] Alarms after specific_filters: {len(filtered_alarms)}")
                 alarms = filtered_alarms
             return self._format_enhanced_alarm_summary_with_reasoning(alarms, entity_id, user_query)
         
@@ -5246,7 +5144,6 @@ class EnhancedAgenticInferrixAgent:
             
             if not location_devices:
                 # If no devices match the location, show all devices with energy data instead
-                print(f"[DEBUG] No devices found for location '{location}', showing all devices with energy data")
                 return self._get_all_devices_energy_consumption(energy_keys)
             
             # Get energy data for each device
