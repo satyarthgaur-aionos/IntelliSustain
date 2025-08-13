@@ -409,7 +409,7 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user_from_aut
         )
 
 @app.get("/inferrix/alarms")
-def get_alarms(current_user=Depends(get_current_user), request: Request = None):
+def get_alarms(current_user=Depends(get_current_user_from_auth_db), request: Request = None):
     """Get alarms from Inferrix API (MCP-compatible endpoint)"""
     try:
         # Get user's Inferrix token from request header
@@ -448,7 +448,7 @@ def get_alarms(current_user=Depends(get_current_user), request: Request = None):
         raise HTTPException(status_code=500, detail=f"Failed to fetch alarms: {str(e)}")
 
 @app.get("/inferrix/devices")
-def get_devices(current_user=Depends(get_current_user), request: Request = None):
+def get_devices(current_user=Depends(get_current_user_from_auth_db), request: Request = None):
     """Get devices from Inferrix API (MCP-compatible endpoint)"""
     try:
         # Get user's Inferrix token from request header
@@ -562,7 +562,7 @@ def api_info():
     }
 
 @app.get("/debug/devices")
-def debug_devices(current_user=Depends(get_current_user), request: Request = None):
+def debug_devices(current_user=Depends(get_current_user_from_auth_db), request: Request = None):
     """Debug endpoint to show available devices and their IDs"""
     try:
         # Get user's Inferrix token from request header
