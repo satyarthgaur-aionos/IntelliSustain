@@ -65,38 +65,8 @@ try:
             except Exception as e:
                 print(f"⚠️  Warning: Could not migrate table: {e}")
             
-            # Create users if they don't exist
-            from database import SessionLocal
-            db = SessionLocal()
-            
-            # Create admin user
-            admin_user = db.query(User).filter(User.email == "admin@inferrix.com").first()
-            if not admin_user:
-                admin_user = User(
-                    email="admin@inferrix.com",
-                    hashed_password="$2b$12$z0BJ4o0UuQ0OoY.6BV7TC.bXllQo.4utSdcGRSLSqarnPTxBMDi9q",
-                    is_active=True,
-                    role="admin"
-                )
-                db.add(admin_user)
-                print("✅ Admin user created")
-            
-            # Create demo user
-            demo_user = db.query(User).filter(User.email == "demo@inferrix.com").first()
-            if not demo_user:
-                demo_user = User(
-                    email="demo@inferrix.com",
-                    hashed_password="$2b$12$YfRS2wyzNhe3PAeFECkzeusp34.RxG7sC2EmDfcksWdysI4yrQcIy",
-                    is_active=True,
-                    role="user"
-                )
-                db.add(demo_user)
-                print("✅ Demo user created")
-            
-            # Removed tech@intellisustain.com user creation
-            
-            db.commit()
-            db.close()
+            # Database setup is handled by startup.py script
+            # This prevents duplicate user creation
             print("✅ Database setup completed successfully")
             
             DATABASE_AVAILABLE = True
