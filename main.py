@@ -93,23 +93,7 @@ try:
                 db.add(demo_user)
                 print("✅ Demo user created")
             
-            # Create tech user with existing password hash
-            tech_user = db.query(User).filter(User.email == "tech@intellisustain.com").first()
-            if not tech_user:
-                tech_user = User(
-                    email="tech@intellisustain.com",
-                    hashed_password="$2b$12$PXEd.nxLEJkA2qeGfmwVC.5uaGbXjFbZXDyh.iRoXPLw/QmdUXu1O",
-                    is_active=True,
-                    role="admin"
-                )
-                db.add(tech_user)
-                print("✅ Tech user created")
-            else:
-                # Force update the tech user with correct hash
-                tech_user.hashed_password = "$2b$12$PXEd.nxLEJkA2qeGfmwVC.5uaGbXjFbZXDyh.iRoXPLw/QmdUXu1O"
-                tech_user.is_active = True
-                tech_user.role = "admin"
-                print("✅ Tech user updated with correct hash")
+            # Removed tech@intellisustain.com user creation
             
             db.commit()
             db.close()
@@ -258,8 +242,7 @@ def login(user: User):
         # Demo login for when database is not available
         if user.email == "demo@inferrix.com" and user.password == "demo123":
             return {"access_token": "demo_token", "token_type": "bearer"}
-        elif user.email == "tech@intellisustain.com" and user.password == "Demo@1234":
-            return {"access_token": "demo_token", "token_type": "bearer"}
+        # Removed tech@intellisustain.com login
         else:
             raise HTTPException(status_code=401, detail="Invalid credentials")
 
