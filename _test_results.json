@@ -1,0 +1,22 @@
+[1mdiff --git a/demo_prompts_test_results.json b/demo_prompts_test_results.json[m
+[1mindex 50b6888..38d3b18 100644[m
+[1m--- a/demo_prompts_test_results.json[m
+[1m+++ b/demo_prompts_test_results.json[m
+[36m@@ -58,7 +58,7 @@[m
+     {[m
+       "prompt": "Show me battery status of all devices",[m
+       "category": "System/Device Status",[m
+[31m-      "response": "\ud83d\udd0b **Battery Status Report for All Devices:**\n\n\u26a0\ufe0f **Devices with Low Battery (<3.0V):** 12\n| Device Name | Battery Level | Status |\n| --- | --- | --- |\n| RH/T Sensor - 800441 | 2.97V | Needs attention "[m
+[32m+[m[32m      "response": "\ud83d\udd0b **Battery Status Report for All Devices:**\n\n\u26a0\ufe0f **Devices with Low Battery (<3.0V):** 11\n| Device Name | Battery Level | Status |\n| --- | --- | --- |\n| RH/T Sensor - 800441 | 2.97V | Needs attention "[m
+     },[m
+     {[m
+       "prompt": "List devices with low battery",[m
+[36m@@ -168,7 +168,7 @@[m
+     {[m
+       "prompt": "Show me energy usage on 2nd floor",[m
+       "category": "Energy Consumption",[m
+[31m-      "response": "\u26a1 **Energy Consumption for 2nd floor:**\n\n| Device Name | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- |\n| 2F-TFA | vfd current | 5.0 | A | 2025-08-13 18:06 |\n| 2F-TFA | vfd"[m
+[32m+[m[32m      "response": "\u26a1 **Energy Consumption for 2nd floor:**\n\n| Device Name | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- |\n| 2F-TFA | vfd current | 5.0 | A | 2025-08-13 20:48 |\n| 2F-TFA | vfd"[m
+     }[m
+   ],[m
+   "failed": [[m
