@@ -35,68 +35,32 @@ def setup_database():
             print(f"⚠️  Warning: Could not create database tables: {e}")
             return False
         
-        # Create admin user
+        # Clean up database and create only the correct user
         try:
             from database import SessionLocal
             db = SessionLocal()
             
-            # Check if admin user already exists
-            admin_user = db.query(User).filter(User.email == "admin@inferrix.com").first()
+            # Delete all existing users
+            db.query(User).delete()
+            db.commit()
+            print("✅ Cleared all existing users")
             
-            if not admin_user:
-                # Create admin user
-                admin_user = User(
-                    email="admin@inferrix.com",
-                    hashed_password=get_password_hash("admin123"),
-                    is_active=True,
-                    role="admin"
-                )
-                db.add(admin_user)
-                db.commit()
-                print("✅ Admin user created successfully!")
-            else:
-                print("✅ Admin user already exists")
+            # Create only the correct user for demo
+            correct_user = User(
+                email="satyarth.gaur@aionos.ai",
+                hashed_password=get_password_hash("Satya2025#"),
+                is_active=True,
+                role="user"
+            )
+            db.add(correct_user)
+            db.commit()
+            print("✅ Created user: satyarth.gaur@aionos.ai")
             
-            # Create demo user
-            demo_user = db.query(User).filter(User.email == "demo@inferrix.com").first()
-            
-            if not demo_user:
-                # Create demo user
-                demo_user = User(
-                    email="demo@inferrix.com",
-                    hashed_password=get_password_hash("demo123"),
-                    is_active=True,
-                    role="user"
-                )
-                db.add(demo_user)
-                db.commit()
-                print("✅ Demo user created successfully!")
-            else:
-                print("✅ Demo user already exists")
-            
-            # Migrate existing users
-            users_to_create = [
-                {
-                    "email": "tech@intellisustain.com",
-                    "hashed_password": "$2b$12$YU4exsnOVpF.9qldXfDhl.n5e22PhRKLGkh9ilbMCFanPoZyToDny",
-                    "is_active": True,
-                    "role": "admin"
-                }
-            ]
-            
-            for user_data in users_to_create:
-                existing_user = db.query(User).filter(User.email == user_data["email"]).first()
-                if not existing_user:
-                    user = User(
-                        email=user_data["email"],
-                        hashed_password=user_data["hashed_password"],
-                        is_active=user_data["is_active"],
-                        role=user_data["role"]
-                    )
-                    db.add(user)
-                    print(f"✅ Migrated user: {user_data['email']}")
-                else:
-                    print(f"✅ User {user_data['email']} already exists")
+            # Verify
+            users = db.query(User).all()
+            print(f"✅ Database now contains {len(users)} user(s):")
+            for user in users:
+                print(f"   - Email: {user.email}, Role: {user.role}")
             
             db.commit()
             db.close()
