@@ -14,6 +14,12 @@ export default function Login({ onLoginSuccess }) {
     localStorage.removeItem("email");
     // Clear any stored form data
     sessionStorage.clear();
+    
+    // Force clear form fields after a short delay
+    setTimeout(() => {
+      setEmail("");
+      setPassword("");
+    }, 100);
   }, []);
 
   const handleSubmit = async (e) => {
@@ -59,12 +65,19 @@ export default function Login({ onLoginSuccess }) {
           Login to IntelliSustain
         </h2>
 
+        {/* Hidden field to prevent browser autofill */}
+        <input type="text" style={{display: 'none'}} autoComplete="username" />
+        <input type="password" style={{display: 'none'}} autoComplete="current-password" />
+
         <label className="block mb-2 text-sm font-medium">Email</label>
         <input
           type="email"
           className="w-full p-2 mb-4 border rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="off"
+          autoFill="off"
+          data-form-type="other"
         />
 
         <label className="block mb-2 text-sm font-medium">Password</label>
@@ -73,6 +86,8 @@ export default function Login({ onLoginSuccess }) {
           className="w-full p-2 mb-4 border rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          data-form-type="other"
         />
 
         {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
