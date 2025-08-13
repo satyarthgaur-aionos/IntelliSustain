@@ -192,7 +192,7 @@ async def serve_frontend():
 # === API Endpoints ===
 @app.post("/login")
 def login(user: User):
-    """Authenticate user and return JWT token"""
+    """Authenticate user and return JWT token with Inferrix token"""
     if DATABASE_AVAILABLE:
         try:
             print(f"[DEBUG] Login attempt for: {user.email}")
@@ -202,7 +202,39 @@ def login(user: User):
                 raise HTTPException(status_code=401, detail="Invalid credentials")
             token = create_access_token({"sub": user.email})
             print(f"[DEBUG] Login successful for: {user.email}")
-            return {"access_token": token, "token_type": "bearer"}
+            
+            # Get Inferrix token for the user
+            try:
+                import requests
+                inferrix_response = requests.post(
+                    "https://cloud.inferrix.com/api/auth/login",
+                    json={"email": user.email, "password": user.password},
+                    headers={"Content-Type": "application/json"},
+                    timeout=30
+                )
+                
+                if inferrix_response.status_code == 200:
+                    inferrix_data = inferrix_response.json()
+                    inferrix_token = inferrix_data.get("token")
+                    
+                    if inferrix_token:
+                        print(f"[DEBUG] Inferrix token obtained for: {user.email}")
+                        return {
+                            "access_token": token, 
+                            "token_type": "bearer",
+                            "inferrix_token": inferrix_token
+                        }
+                    else:
+                        print("Warning: No token in Inferrix response")
+                        return {"access_token": token, "token_type": "bearer"}
+                else:
+                    print(f"Warning: Inferrix login failed with status {inferrix_response.status_code}")
+                    return {"access_token": token, "token_type": "bearer"}
+                    
+            except Exception as e:
+                print(f"Warning: Error getting Inferrix token: {e}")
+                return {"access_token": token, "token_type": "bearer"}
+                
         except Exception as e:
             print(f"[DEBUG] Login error for {user.email}: {e}")
             import traceback
