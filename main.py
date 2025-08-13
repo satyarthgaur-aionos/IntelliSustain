@@ -206,6 +206,8 @@ def login(user: User):
             # Get Inferrix token for the user
             try:
                 import requests
+                
+                # First, try to get Inferrix token using user's credentials
                 inferrix_response = requests.post(
                     "https://cloud.inferrix.com/api/auth/login",
                     json={"email": user.email, "password": user.password},
@@ -215,7 +217,26 @@ def login(user: User):
                 
                 if inferrix_response.status_code == 200:
                     inferrix_data = inferrix_response.json()
-                    inferrix_token = inferrix_data.get("token")
+                    print(f"[DEBUG] Inferrix response: {inferrix_data}")
+                    
+                    # Try different possible token field names
+                    inferrix_token = None
+                    possible_token_fields = ["token", "access_token", "accessToken", "jwt", "jwt_token"]
+                    
+                    for field in possible_token_fields:
+                        if field in inferrix_data:
+                            inferrix_token = inferrix_data[field]
+                            print(f"[DEBUG] Found token in field '{field}'")
+                            break
+                    
+                    # If no standard field found, look for the first long string that looks like a JWT
+                    if not inferrix_token:
+                        for key, value in inferrix_data.items():
+                            if isinstance(value, str) and len(value) > 100 and value.count('.') == 2:
+                                # This looks like a JWT token (3 parts separated by dots)
+                                inferrix_token = value
+                                print(f"[DEBUG] Found JWT token in field '{key}'")
+                                break
                     
                     if inferrix_token:
                         print(f"[DEBUG] Inferrix token obtained for: {user.email}")
@@ -225,10 +246,12 @@ def login(user: User):
                             "inferrix_token": inferrix_token
                         }
                     else:
-                        print("Warning: No token in Inferrix response")
+                        print("Warning: No token found in Inferrix response")
+                        print(f"[DEBUG] Available fields: {list(inferrix_data.keys())}")
                         return {"access_token": token, "token_type": "bearer"}
                 else:
                     print(f"Warning: Inferrix login failed with status {inferrix_response.status_code}")
+                    print(f"[DEBUG] Inferrix error response: {inferrix_response.text}")
                     return {"access_token": token, "token_type": "bearer"}
                     
             except Exception as e:
