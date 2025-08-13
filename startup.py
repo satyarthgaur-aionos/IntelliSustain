@@ -35,17 +35,27 @@ def setup_database():
             print(f"⚠️  Warning: Could not create database tables: {e}")
             return False
         
-        # Clean up database and create only the correct user
+        # FORCE CLEAN DATABASE - Delete all users and recreate
         try:
             from database import SessionLocal
             db = SessionLocal()
             
-            # Delete all existing users
-            db.query(User).delete()
+            # Step 1: Delete ALL users using raw SQL to ensure complete cleanup
+            print("🧹 FORCE CLEANING DATABASE - Deleting all users...")
+            db.execute("DELETE FROM users")
             db.commit()
-            print("✅ Cleared all existing users")
+            print("✅ All users deleted from database")
             
-            # Create only the correct user for demo
+            # Step 2: Reset the sequence to start from 1
+            try:
+                db.execute("ALTER SEQUENCE users_id_seq RESTART WITH 1")
+                db.commit()
+                print("✅ Reset user ID sequence")
+            except Exception as e:
+                print(f"⚠️  Could not reset sequence: {e}")
+            
+            # Step 3: Create ONLY the correct user
+            print("👤 Creating correct user: satyarth.gaur@aionos.ai")
             correct_user = User(
                 email="satyarth.gaur@aionos.ai",
                 hashed_password=get_password_hash("Satya2025#"),
@@ -56,13 +66,12 @@ def setup_database():
             db.commit()
             print("✅ Created user: satyarth.gaur@aionos.ai")
             
-            # Verify
+            # Step 4: Verify database state
             users = db.query(User).all()
             print(f"✅ Database now contains {len(users)} user(s):")
             for user in users:
-                print(f"   - Email: {user.email}, Role: {user.role}")
+                print(f"   - ID: {user.id}, Email: {user.email}, Role: {user.role}")
             
-            db.commit()
             db.close()
             
             print("🎉 Database setup completed successfully!")
@@ -103,9 +112,8 @@ def main():
     if success:
         print("\n🎉 Setup complete!")
         print("You can now log in with:")
-        print("  Admin: admin@inferrix.com / admin123")
-        print("  Demo:  demo@inferrix.com / demo123")
-        print("  Tech:  tech@intellisustain.com / Demo@1234")
+        print("  Email: satyarth.gaur@aionos.ai")
+        print("  Password: Satya2025#")
     else:
         print("\n⚠️  Setup completed with warnings")
         print("Application will run in demo mode")
