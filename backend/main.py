@@ -113,19 +113,21 @@ def login(user: User):
         headers = {
             "Content-Type": "application/json",
             "User-Agent": "IntelliSustain-AI-Agent/2.0.0",
-            "Accept": "application/json"
+            "Accept": "application/json",
+            "Connection": "keep-alive"
         }
         
         # Add Railway-specific headers if needed
-        if os.getenv("RAILWAY_ENVIRONMENT"):
+        if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("PORT") == "8080":
             headers["X-Platform"] = "Railway"
             headers["X-Environment"] = "production"
+            print(f"[DEBUG] Detected Railway environment")
         
         print(f"[DEBUG] Calling Inferrix API with headers: {headers}")
         print(f"[DEBUG] Inferrix login data: {inferrix_login_data}")
         
         # Add retry logic for Railway
-        max_retries = 3 if os.getenv("RAILWAY_ENVIRONMENT") else 1
+        max_retries = 3 if (os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("PORT") == "8080") else 1
         retry_count = 0
         
         while retry_count < max_retries:
@@ -448,6 +450,6 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
 
-# Force redeploy
+# Force redeploy - Railway fix v2
 
 
