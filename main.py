@@ -17,7 +17,7 @@ from pydantic import BaseModel
 try:
     from database import engine, Base
     from user_model import User
-    from auth_db import get_password_hash, verify_user, create_access_token, oauth2_scheme
+    from auth_db import get_password_hash, verify_user, create_access_token, oauth2_scheme, get_current_user as get_current_user_from_auth_db
     
     # Check if database engine is available
     if engine is None:
@@ -269,20 +269,10 @@ def login(user: User):
         # No database available - cannot authenticate
         raise HTTPException(status_code=503, detail="Database not available")
 
-def get_current_user():
-    """Get current user - requires database"""
-    if not DATABASE_AVAILABLE:
-        raise HTTPException(status_code=503, detail="Database not available")
-    
-    try:
-        from auth_db import get_current_user as db_get_current_user
-        return db_get_current_user()
-    except Exception as e:
-        print(f"[DEBUG] Authentication error: {e}")
-        raise HTTPException(status_code=401, detail="Authentication required")
+
 
 @app.post("/chat")
-def chat(prompt: Prompt, current_user=Depends(get_current_user)):
+def chat(prompt: Prompt, current_user=Depends(get_current_user_from_auth_db)):
     """Process chat query through AI agent using agentic approach"""
     try:
         if not prompt.query.strip():
@@ -345,7 +335,7 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user)):
         )
 
 @app.post("/chat/enhanced")
-def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user)):
+def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user_from_auth_db)):
     """Process chat query through enhanced AI agent with AI magic features"""
     try:
         if not prompt.query.strip():
