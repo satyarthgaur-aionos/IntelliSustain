@@ -116,31 +116,57 @@ def login(user: User):
             "Accept": "application/json"
         }
         
+        # Add Railway-specific headers if needed
+        if os.getenv("RAILWAY_ENVIRONMENT"):
+            headers["X-Platform"] = "Railway"
+            headers["X-Environment"] = "production"
+        
         print(f"[DEBUG] Calling Inferrix API with headers: {headers}")
         print(f"[DEBUG] Inferrix login data: {inferrix_login_data}")
         
-        inferrix_response = requests.post(
-            "https://cloud.inferrix.com/api/auth/login",
-            json=inferrix_login_data,
-            headers=headers,
-            timeout=30
-        )
+        # Add retry logic for Railway
+        max_retries = 3 if os.getenv("RAILWAY_ENVIRONMENT") else 1
+        retry_count = 0
+        
+        while retry_count < max_retries:
+            try:
+                print(f"[DEBUG] Attempt {retry_count + 1} of {max_retries} for Inferrix API call")
+                inferrix_response = requests.post(
+                    "https://cloud.inferrix.com/api/auth/login",
+                    json=inferrix_login_data,
+                    headers=headers,
+                    timeout=30
+                )
+                break  # Success, exit retry loop
+            except Exception as e:
+                retry_count += 1
+                print(f"[DEBUG] Attempt {retry_count} failed: {e}")
+                if retry_count >= max_retries:
+                    print(f"[DEBUG] All {max_retries} attempts failed")
+                    raise e
+                time.sleep(1)  # Wait before retry
+        
+        print(f"[DEBUG] Inferrix response status: {inferrix_response.status_code}")
+        print(f"[DEBUG] Inferrix response headers: {dict(inferrix_response.headers)}")
+        print(f"[DEBUG] Inferrix response text: {inferrix_response.text}")
         
         if inferrix_response.status_code == 200:
             inferrix_data = inferrix_response.json()
             inferrix_token = inferrix_data.get("token")
             
             if inferrix_token:
+                print(f"[DEBUG] Successfully got Inferrix token: {inferrix_token[:50]}...")
                 return {
                     "access_token": token, 
                     "token_type": "bearer",
                     "inferrix_token": inferrix_token
                 }
             else:
-                print("Warning: No token in Inferrix response")
+                print(f"[DEBUG] Warning: No token in Inferrix response. Full response: {inferrix_data}")
                 return {"access_token": token, "token_type": "bearer"}
         else:
-            print(f"Warning: Inferrix login failed with status {inferrix_response.status_code}")
+            print(f"[DEBUG] Warning: Inferrix login failed with status {inferrix_response.status_code}")
+            print(f"[DEBUG] Error response: {inferrix_response.text}")
             return {"access_token": token, "token_type": "bearer"}
             
     except Exception as e:
