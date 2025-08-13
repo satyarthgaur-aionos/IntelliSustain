@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,8 +23,24 @@ app.add_middleware(
 def root():
     return {"status": "MCP Server for Inferrix is running"}
 
+@app.get("/health")
+def health():
+    return {
+        "status": "✅ MCP Server is running",
+        "timestamp": time.time(),
+        "endpoints": {
+            "devices": "/inferrix/devices",
+            "alarms": "/inferrix/alarms"
+        }
+    }
+
 @app.get("/inferrix/alarms")
 def get_alarms(request: Request):
+    # Get the Inferrix token from the request headers
+    inferrix_token = request.headers.get("X-Inferrix-Token")
+    if not inferrix_token:
+        raise HTTPException(status_code=401, detail="Inferrix API token required. Please provide X-Inferrix-Token header.")
+    
     url = "https://cloud.inferrix.com/api/v2/alarms"
     params = {
         "pageSize": 1000,  # Increased to get all alarms
@@ -32,7 +49,7 @@ def get_alarms(request: Request):
         "sortOrder": "DESC",
         "statusList": "ACTIVE"  # Only ACTIVE alarms by default
     }
-    headers = {"X-Authorization": f"Bearer {INFERRIX_API_TOKEN}", "Content-Type": "application/json"}
+    headers = {"X-Authorization": f"Bearer {inferrix_token}", "Content-Type": "application/json"}
     try:
         # Check for history/past/last/week/month/day/old in query string
         include_cleared = False
@@ -51,7 +68,13 @@ def get_alarms(request: Request):
         raise HTTPException(status_code=500, detail="Inferrix API call failed")
 
 @app.get("/inferrix/devices")
-def get_devices():
+def get_devices(request: Request):
+    # Get the Inferrix token from the request headers
+    inferrix_token = request.headers.get("X-Inferrix-Token")
+    if not inferrix_token:
+        # For health checks, return a simple response without authentication
+        return {"status": "MCP Server is running", "note": "Authentication required for full API access"}
+    
     url = "https://cloud.inferrix.com/api/user/devices"
     params = {
         "pageSize": 100,
@@ -60,7 +83,7 @@ def get_devices():
         "sortOrder": "DESC",
         "includeCustomers": "true"
     }
-    headers = {"X-Authorization": f"Bearer {INFERRIX_API_TOKEN}", "Content-Type": "application/json"}
+    headers = {"X-Authorization": f"Bearer {inferrix_token}", "Content-Type": "application/json"}
     try:
         response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
