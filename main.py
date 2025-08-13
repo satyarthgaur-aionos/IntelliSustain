@@ -17,7 +17,7 @@ from pydantic import BaseModel
 try:
     from database import engine, Base
     from user_model import User
-    from auth_db import get_password_hash, verify_user, create_access_token, oauth2_scheme, get_current_user as db_get_current_user
+    from auth_db import get_password_hash, verify_user, create_access_token, oauth2_scheme
     
     # Check if database engine is available
     if engine is None:
@@ -271,14 +271,15 @@ def login(user: User):
 
 def get_current_user():
     """Get current user - requires database"""
-    if DATABASE_AVAILABLE:
-        try:
-            return db_get_current_user()
-        except Exception as e:
-            print(f"[DEBUG] Authentication error: {e}")
-            raise HTTPException(status_code=401, detail="Authentication required")
-    else:
+    if not DATABASE_AVAILABLE:
         raise HTTPException(status_code=503, detail="Database not available")
+    
+    try:
+        from auth_db import get_current_user as db_get_current_user
+        return db_get_current_user()
+    except Exception as e:
+        print(f"[DEBUG] Authentication error: {e}")
+        raise HTTPException(status_code=401, detail="Authentication required")
 
 @app.post("/chat")
 def chat(prompt: Prompt, current_user=Depends(get_current_user)):
