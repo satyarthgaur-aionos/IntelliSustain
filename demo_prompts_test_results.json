@@ -63,7 +63,7 @@
     {
       "prompt": "List devices with low battery",
       "category": "System/Device Status",
-      "response": "\ud83d\udd0b **Devices with Low Battery (<3.0V):**\n\n| Device Name | Battery Level | Status |\n| --- | --- | --- |\n| RH/T Sensor - 800441 | 2.97V | Needs attention |\n| RH/T Sensor - 800442 | 2.98V | Needs attentio"
+      "response": "\ud83d\udd0b **Devices with Low Battery (<3.0V):**\n\n| Device Name | Battery Level | Status |\n| --- | --- | --- |\n| RH/T Sensor - 800441 | 2.97V | Needs attention |\n| RH/T Sensor - 800442 | 2.99V | Needs attentio"
     },
     {
       "prompt": "Give temperature of 2F-Room50-Thermostat",
@@ -158,7 +158,7 @@
     {
       "prompt": "Get energy consumption for Room 50 2nd floor",
       "category": "Energy Consumption",
-      "response": "\u26a1 **Energy Consumption for room 50:**\n\n| Device Name | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1050 | power_consumption | 0.15 | W | 2025-"
+      "response": "\u26a1 **Energy Consumption for room 50:**\n\n| Device Name | Energy Metric | Value | Unit | Timestamp |\n| --- | --- | --- | --- | --- |\n| Lighting Controller V4 - 1050 | power_consumption | 0.0 | W | 2025-0"
     },
     {
       "prompt": "Show me energy consumption data",
@@ -175,7 +175,7 @@
     {
       "prompt": "Check humidity of second floor room number 50",
       "category": "Humidity Check",
-      "error": "\u274c **No data available** for 'humidity' on device 96eec750-4c24-11f0-816d-85352a7c91ff.\n\n\ud83d\udccb **Available metrics:** heartbeat, mode status, device monitor, set fan speed, fan speed status, room temperature setpoint, room temperature, thermostat status\n\n\ud83d\udca1 **Try:** 'Show [available metric] for [device]'\n\n\ud83d\udca1 **Other devices with 'humidity' metric:** RH/T Sensor - 800440, RH/T Sensor - 800441, RH/T Sensor - 800442, IAQ Sensor V2 - 150001, IAQ Sensor V2 - 300180 and 9 more"
+      "error": "\u274c **No data available** for 'humidity' on device 96eec750-4c24-11f0-816d-85352a7c91ff.\n\n\ud83d\udccb **Available metrics:** heartbeat, device monitor, mode status, set fan speed, fan speed status, room temperature setpoint, room temperature, thermostat status\n\n\ud83d\udca1 **Try:** 'Show [available metric] for [device]'\n\n\ud83d\udca1 **Other devices with 'humidity' metric:** RH/T Sensor - 800440, RH/T Sensor - 800441, RH/T Sensor - 800442, IAQ Sensor V2 - 150001, IAQ Sensor V2 - 300180 and 9 more"
     }
   ],
   "summary": {
