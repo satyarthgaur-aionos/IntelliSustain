@@ -17,7 +17,7 @@ from pydantic import BaseModel
 try:
     from database import engine, Base
     from user_model import User
-    from auth_db import get_password_hash, verify_user, create_access_token
+    from auth_db import get_password_hash, verify_user, create_access_token, oauth2_scheme, get_current_user as db_get_current_user
     
     # Check if database engine is available
     if engine is None:
@@ -273,9 +273,9 @@ def get_current_user():
     """Get current user - requires database"""
     if DATABASE_AVAILABLE:
         try:
-            from auth_db import get_current_user as db_get_current_user
             return db_get_current_user()
-        except:
+        except Exception as e:
+            print(f"[DEBUG] Authentication error: {e}")
             raise HTTPException(status_code=401, detail="Authentication required")
     else:
         raise HTTPException(status_code=503, detail="Database not available")
