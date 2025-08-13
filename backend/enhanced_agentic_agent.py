@@ -1492,17 +1492,7 @@ class EnhancedAgenticInferrixAgent:
             else:
                 return f"❌ Unable to find device for '{device_phrase}'. Please check the room/device name."
 
-        # PATCH: Device inventory/listing queries
-        device_list_keywords = ['all devices', 'list devices', 'show devices', 'active devices', 'device inventory', 'available devices', 'device list']
-        if any(word in user_query.lower() for word in device_list_keywords):
-            devices = self._get_devices_list()
-            return self._format_full_device_summary(devices)
-        # PATCH: System communication status direct handling
-        communication_keywords = ['communication', 'system communication', 'connection', 'connectivity']
-        if any(word in user_query.lower() for word in communication_keywords):
-            return self._get_system_communication_status({'query': user_query})
-        
-        # PATCH: Energy consumption queries
+        # PATCH: Energy consumption queries (MUST BE BEFORE device list handler)
         energy_keywords = ['energy consumption', 'power consumption', 'electricity usage', 'energy usage', 
                           'power usage', 'energy data', 'power data', 'kwh', 'voltage', 'current', 
                           'energy efficiency', 'energy consumption', 'power consumption']
@@ -1631,6 +1621,16 @@ class EnhancedAgenticInferrixAgent:
                 'location': location,
                 'timeframe': 'current'
             })
+        
+        # PATCH: Device inventory/listing queries
+        device_list_keywords = ['all devices', 'list devices', 'show devices', 'active devices', 'device inventory', 'available devices', 'device list']
+        if any(word in user_query.lower() for word in device_list_keywords):
+            devices = self._get_devices_list()
+            return self._format_full_device_summary(devices)
+        # PATCH: System communication status direct handling
+        communication_keywords = ['communication', 'system communication', 'connection', 'connectivity']
+        if any(word in user_query.lower() for word in communication_keywords):
+            return self._get_system_communication_status({'query': user_query})
         
         # PATCH: Air Quality/CO2/PM direct handling
         air_quality_keywords = ['co2', 'air quality', 'pm2.5', 'pm10', 'aqi']
