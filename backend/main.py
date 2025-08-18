@@ -241,6 +241,8 @@ def enhanced_chat(prompt: Prompt, request: Request, current_user=Depends(get_cur
         
         # Use the enhanced agentic agent with AI magic features
         agent = get_enhanced_agentic_agent()
+        # Set the API token on the agent
+        agent._api_token = inferrix_token
         response = agent.process_query(prompt.query, prompt.user, prompt.device or "", inferrix_token)
         
         # Always return a string
