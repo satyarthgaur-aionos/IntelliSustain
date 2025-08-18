@@ -442,5 +442,6 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=port)
 
 # Force redeploy - Railway fix v2
+# FORCE RAILWAY REDEPLOYMENT - 2025-08-18 19:45:00 - AI agent token fix deployed
 
 
