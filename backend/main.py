@@ -443,5 +443,7 @@ if __name__ == "__main__":
 
 # Force redeploy - Railway fix v2
 # FORCE RAILWAY REDEPLOYMENT - 2025-08-18 19:45:00 - AI agent token fix deployed
+# CRITICAL FIX: Railway is still using old code - Force redeploy now!
+# TIMESTAMP: 2025-08-18 20:06:00 - URGENT REDEPLOYMENT NEEDED
 
 
