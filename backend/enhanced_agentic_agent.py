@@ -2013,7 +2013,7 @@ class EnhancedAgenticInferrixAgent:
                     if device_id:
                         try:
                             # Try to get device details to see if location is stored in properties
-                            device_details = self._make_api_request(f"user/devices/{device_id}")
+                            device_details = self._make_api_request(f"user/devices/{device_id}", token=self._api_token)
                             if device_details and isinstance(device_details, dict):
                                 # Check for location in device properties
                                 properties = device_details.get('properties', {})
@@ -2127,7 +2127,7 @@ class EnhancedAgenticInferrixAgent:
                 if device_id:
                     try:
                         # Try to get device details to see if location is stored in properties
-                        device_details = self._make_api_request(f"user/devices/{device_id}")
+                        device_details = self._make_api_request(f"user/devices/{device_id}", token=self._api_token)
                         if device_details and isinstance(device_details, dict):
                             # Check for location in device properties
                             properties = device_details.get('properties', {})
@@ -2299,7 +2299,8 @@ class EnhancedAgenticInferrixAgent:
     def _get_devices_list(self) -> List[Dict]:
         """Get list of devices for multi-device processing"""
         try:
-            devices_data = self._make_api_request("user/devices?page=0&pageSize=100")
+            # Use the stored API token
+            devices_data = self._make_api_request("user/devices?page=0&pageSize=100", token=self._api_token)
             
             # Handle API errors with proper error messages
             if isinstance(devices_data, dict) and 'error' in devices_data:
@@ -5287,7 +5288,7 @@ class EnhancedAgenticInferrixAgent:
         """Get energy consumption for all devices in a location"""
         try:
             # Get all devices
-            devices_response = self._make_api_request("user/devices?pageSize=1000&page=0")
+            devices_response = self._make_api_request("user/devices?pageSize=1000&page=0", token=self._api_token)
             
             if not devices_response:
                 return f"❌ No devices found for location {location}"
@@ -5423,7 +5424,7 @@ class EnhancedAgenticInferrixAgent:
             print(f"[DEBUG] Getting energy consumption for all devices with keys: {energy_keys}")
             
             # Get all devices
-            devices_response = self._make_api_request("user/devices?pageSize=1000&page=0")
+            devices_response = self._make_api_request("user/devices?pageSize=1000&page=0", token=self._api_token)
             
             if not devices_response:
                 print("[DEBUG] No devices response received")
@@ -5469,7 +5470,7 @@ class EnhancedAgenticInferrixAgent:
                         if device_id:
                             try:
                                 # Try to get device details to see if location is stored in properties
-                                device_details = self._make_api_request(f"user/devices/{device_id}")
+                                device_details = self._make_api_request(f"user/devices/{device_id}", token=self._api_token)
                                 if device_details and isinstance(device_details, dict):
                                     # Check for location in device properties
                                     properties = device_details.get('properties', {})
