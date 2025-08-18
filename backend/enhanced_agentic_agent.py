@@ -991,7 +991,12 @@ class EnhancedAgenticInferrixAgent:
     def process_query(self, user_query: str, user: str = "User", device: str = "", token: str = None) -> str:
         # Set the token if provided
         if token:
+            print(f"[DEBUG] Enhanced agent - Setting API token: {token[:20]}...")
             self.set_api_token(token)
+            print(f"[DEBUG] Enhanced agent - Token set successfully: {hasattr(self, '_api_token') and self._api_token is not None}")
+        else:
+            print("[DEBUG] Enhanced agent - No token provided to process_query")
+            print(f"[DEBUG] Enhanced agent - Current agent token: {hasattr(self, '_api_token') and self._api_token is not None}")
         # PATCH: Battery status direct handling (handle 'low battery' and similar queries FIRST)
         battery_keywords_direct = ['low battery', 'devices with low battery', 'show low battery', 'battery status', 'battery level', 'normal battery', 'devices with normal battery', 'show normal battery', 'proper battery', 'correct battery', 'optimum battery', 'optimal battery', 'good battery', 'healthy battery']
         if any(word in user_query.lower() for word in battery_keywords_direct):
@@ -2566,6 +2571,9 @@ class EnhancedAgenticInferrixAgent:
         """Make API request to Inferrix"""
         # Use provided token or fall back to class token
         api_token = token or getattr(self, '_api_token', None)
+        print(f"[DEBUG] _make_api_request - Provided token: {token[:20] if token else 'None'}...")
+        print(f"[DEBUG] _make_api_request - Class token: {getattr(self, '_api_token', None)[:20] if getattr(self, '_api_token', None) else 'None'}...")
+        print(f"[DEBUG] _make_api_request - Final api_token: {api_token[:20] if api_token else 'None'}...")
         if not api_token:
             return {"error": "No token provided", "message": "API token is required", "suggestion": "Please log in again"}
         
@@ -5603,3 +5611,4 @@ class EnhancedAgenticInferrixAgent:
 enhanced_agentic_agent = EnhancedAgenticInferrixAgent()
 # FORCE RAILWAY REDEPLOYMENT - 2025-08-18 20:15:00 - All alarm and device API calls now pass token parameter
 # URGENT: 2025-08-18 20:30:00 - bcrypt fix + token fixes - Railway must redeploy NOW!
+# CRITICAL: 2025-08-18 20:35:00 - Railway deployment cache issue - Force complete redeploy!

@@ -228,21 +228,34 @@ def enhanced_chat(prompt: Prompt, request: Request, current_user=Depends(get_cur
         if not prompt.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
         
-        # Minimal logging for enhanced chat
+        # Enhanced logging for debugging
         print(f"[DEBUG] Enhanced chat request from user: {prompt.user}")
+        print(f"[DEBUG] Enhanced chat - Query: {prompt.query}")
         
         # Get the Inferrix token from the request headers
         inferrix_token = None
         auth_header = request.headers.get("X-Inferrix-Token")
         if auth_header:
             inferrix_token = auth_header
+            print(f"[DEBUG] Enhanced chat - Token found: {inferrix_token[:20]}...")
         else:
             print("[DEBUG] Enhanced chat - No X-Inferrix-Token header found")
+            # Try to get from Authorization header as fallback
+            auth_header = request.headers.get("Authorization")
+            if auth_header and auth_header.startswith("Bearer "):
+                inferrix_token = auth_header[7:]  # Remove "Bearer " prefix
+                print(f"[DEBUG] Enhanced chat - Token from Authorization header: {inferrix_token[:20]}...")
         
         # Use the enhanced agentic agent with AI magic features
         agent = get_enhanced_agentic_agent()
+        
+        # Debug: Check if agent has token before calling process_query
+        print(f"[DEBUG] Enhanced chat - Agent has token: {hasattr(agent, '_api_token') and agent._api_token is not None}")
+        
         # Pass the token to process_query - it will set the API token internally
         response = agent.process_query(prompt.query, prompt.user, prompt.device or "", inferrix_token)
+        
+        print(f"[DEBUG] Enhanced chat - Final response: {response[:100]}...")
         
         # Always return a string
         if not response:
