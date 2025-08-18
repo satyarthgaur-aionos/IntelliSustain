@@ -446,6 +446,9 @@ class EnhancedAgenticInferrixAgent:
         # Add more aliases as needed
     }
     def __init__(self):
+        # Initialize API token
+        self._api_token = None
+        
         # Initialize LLM only if API key is available
         try:
             if OPENAI_API_KEY and OPENAI_API_KEY != "test-key-for-testing":
@@ -2872,7 +2875,7 @@ class EnhancedAgenticInferrixAgent:
             alarms = []
             telemetry = {}
             if device_id:
-                alarms_data = self._make_api_request(f"alarms?deviceId={device_id}&pageSize=10&page=0")
+                alarms_data = self._make_api_request(f"alarms?deviceId={device_id}&pageSize=10&page=0", token=self._api_token)
                 if isinstance(alarms_data, dict) and 'data' in alarms_data:
                     alarms = alarms_data['data']
                 telemetry = self._make_api_request(f"plugins/telemetry/DEVICE/{device_id}/values/timeseries?keys=temperature,humidity,energy")
@@ -3021,7 +3024,7 @@ class EnhancedAgenticInferrixAgent:
             }
             endpoint = "v2/alarms"
             import urllib.parse
-            alarms_data = self._make_api_request(endpoint, method="GET", data=params)
+            alarms_data = self._make_api_request(endpoint, method="GET", data=params, token=self._api_token)
             if isinstance(alarms_data, dict) and 'error' in alarms_data:
                 error_msg = alarms_data.get('error', 'Unknown error')
                 # PATCH: Special handling for 401 token expired
@@ -3763,7 +3766,7 @@ class EnhancedAgenticInferrixAgent:
         response += "🌡️ **Environmental Metrics:**\n"
         try:
             # Get real temperature and humidity data from available devices
-            devices = self._make_api_request("devices?pageSize=10&page=0")
+            devices = self._make_api_request("devices?pageSize=10&page=0", token=self._api_token)
             if isinstance(devices, dict) and 'data' in devices and devices['data']:
                 # Use the first available device for environmental data
                 first_device = devices['data'][0]
@@ -3795,7 +3798,7 @@ class EnhancedAgenticInferrixAgent:
         response += "🔧 **Maintenance Status:**\n"
         try:
             # Get real alarm data
-            alarms_data = self._make_api_request("alarms?pageSize=10&page=0")
+            alarms_data = self._make_api_request("alarms?pageSize=10&page=0", token=self._api_token)
             if isinstance(alarms_data, dict) and 'data' in alarms_data:
                 active_alarms = len(alarms_data['data'])
                 response += f"• Active Alarms: {active_alarms}\n"
@@ -3837,7 +3840,7 @@ class EnhancedAgenticInferrixAgent:
         response += "**Step 1: Energy Analysis**\n"
         try:
             # Get real energy consumption data from available devices
-            devices = self._make_api_request("devices?pageSize=10&page=0")
+            devices = self._make_api_request("devices?pageSize=10&page=0", token=self._api_token)
             if isinstance(devices, dict) and 'data' in devices and devices['data']:
                 # Use the first available device for energy data
                 first_device = devices['data'][0]
@@ -4682,7 +4685,7 @@ class EnhancedAgenticInferrixAgent:
             debug_params = params.copy()
             debug_url = f"{INFERRIX_BASE_URL}/{endpoint}?" + urllib.parse.urlencode(debug_params)
             try:
-                alarms_data = self._make_api_request(endpoint, method="GET", data=params)
+                alarms_data = self._make_api_request(endpoint, method="GET", data=params, token=self._api_token)
             except Exception as api_exc:
                 return f"❌ Alarm data is currently unavailable due to a server or network issue.\n- Technical details: {api_exc}\n- Request: {debug_url}\n- Please check your connection or try again in a few minutes.\n- If the problem persists, contact Inferrix support."
             # Handle 500 error or error in response
@@ -5008,7 +5011,7 @@ class EnhancedAgenticInferrixAgent:
             comm_alarms = []
             try:
                 endpoint = "plugins/telemetry/alarms?pageSize=1000&page=0&statusList=ACTIVE"
-                alarms_data = self._make_api_request(endpoint)
+                alarms_data = self._make_api_request(endpoint, token=self._api_token)
                 
                 if isinstance(alarms_data, dict) and 'data' in alarms_data:
                     alarms = alarms_data['data']
@@ -5150,7 +5153,7 @@ class EnhancedAgenticInferrixAgent:
                     # Check for pump alarms
                     try:
                         endpoint = f"plugins/telemetry/alarms?pageSize=100&page=0&statusList=ACTIVE&entityId={device_id}"
-                        alarms_data = self._make_api_request(endpoint)
+                        alarms_data = self._make_api_request(endpoint, token=self._api_token)
                         
                         if isinstance(alarms_data, dict) and 'data' in alarms_data:
                             pump_alarms = alarms_data['data']
@@ -5597,5 +5600,5 @@ class EnhancedAgenticInferrixAgent:
 
 # Create global instance
 # FORCE RAILWAY REDEPLOYMENT - Latest token fixes applied
-enhanced_agentic_agent = EnhancedAgenticInferrixAgent() 
-# FORCE RAILWAY REDEPLOYMENT - 2025-08-18 19:29:14
+enhanced_agentic_agent = EnhancedAgenticInferrixAgent()
+# FORCE RAILWAY REDEPLOYMENT - 2025-08-18 20:15:00 - All alarm and device API calls now pass token parameter
