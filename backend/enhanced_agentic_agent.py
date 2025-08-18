@@ -994,13 +994,16 @@ class EnhancedAgenticInferrixAgent:
             print(f"[DEBUG] Enhanced agent - Setting API token: {token[:20]}...")
             self.set_api_token(token)
             print(f"[DEBUG] Enhanced agent - Token set successfully: {hasattr(self, '_api_token') and self._api_token is not None}")
+            print(f"[DEBUG] Enhanced agent - Token value: {self._api_token[:20] if self._api_token else 'None'}...")
         else:
             print("[DEBUG] Enhanced agent - No token provided to process_query")
             print(f"[DEBUG] Enhanced agent - Current agent token: {hasattr(self, '_api_token') and self._api_token is not None}")
+            if hasattr(self, '_api_token') and self._api_token:
+                print(f"[DEBUG] Enhanced agent - Current token value: {self._api_token[:20]}...")
         # PATCH: Battery status direct handling (handle 'low battery' and similar queries FIRST)
         battery_keywords_direct = ['low battery', 'devices with low battery', 'show low battery', 'battery status', 'battery level', 'normal battery', 'devices with normal battery', 'show normal battery', 'proper battery', 'correct battery', 'optimum battery', 'optimal battery', 'good battery', 'healthy battery']
         if any(word in user_query.lower() for word in battery_keywords_direct):
-            return self._get_battery_status_all_devices({'query': user_query})
+            return self._get_battery_status_all_devices({'query': user_query}, token=token)
 
         # PATCH: Set temperature command handling
         import re
@@ -2304,11 +2307,12 @@ class EnhancedAgenticInferrixAgent:
         except Exception as e:
             return None
 
-    def _get_devices_list(self) -> List[Dict]:
+    def _get_devices_list(self, token: str = None) -> List[Dict]:
         """Get list of devices for multi-device processing"""
         try:
-            # Use the stored API token
-            devices_data = self._make_api_request("user/devices?page=0&pageSize=100", token=self._api_token)
+            # Use provided token or fall back to stored API token
+            api_token = token or self._api_token
+            devices_data = self._make_api_request("user/devices?page=0&pageSize=100", token=api_token)
             
             # Handle API errors with proper error messages
             if isinstance(devices_data, dict) and 'error' in devices_data:
@@ -4886,10 +4890,10 @@ class EnhancedAgenticInferrixAgent:
         
         return response
 
-    def _get_battery_status_all_devices(self, args: Dict) -> str:
+    def _get_battery_status_all_devices(self, args: Dict, token: str = None) -> str:
         """Get battery status for all devices with low battery detection"""
         try:
-            devices = self._get_devices_list() or []
+            devices = self._get_devices_list(token=token) or []
             if not devices:
                 return "❌ No devices found."
             
@@ -5612,3 +5616,5 @@ enhanced_agentic_agent = EnhancedAgenticInferrixAgent()
 # FORCE RAILWAY REDEPLOYMENT - 2025-08-18 20:15:00 - All alarm and device API calls now pass token parameter
 # URGENT: 2025-08-18 20:30:00 - bcrypt fix + token fixes - Railway must redeploy NOW!
 # CRITICAL: 2025-08-18 20:35:00 - Railway deployment cache issue - Force complete redeploy!
+
+# FORCE RAILWAY REDEPLOYMENT - 2025-08-18 22:54:08
