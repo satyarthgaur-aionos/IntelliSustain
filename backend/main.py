@@ -105,7 +105,7 @@ def login(user: User):
     # Now authenticate with Inferrix API using the same credentials
     try:
         inferrix_login_data = {
-            "username": user.email,  # Use the same email from local login
+            "email": user.email,  # Use the same email from local login
             "password": user.password  # Use the same password from local login
         }
         
