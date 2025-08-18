@@ -5602,3 +5602,4 @@ class EnhancedAgenticInferrixAgent:
 # FORCE RAILWAY REDEPLOYMENT - Latest token fixes applied
 enhanced_agentic_agent = EnhancedAgenticInferrixAgent()
 # FORCE RAILWAY REDEPLOYMENT - 2025-08-18 20:15:00 - All alarm and device API calls now pass token parameter
+# URGENT: 2025-08-18 20:30:00 - bcrypt fix + token fixes - Railway must redeploy NOW!

@@ -241,8 +241,7 @@ def enhanced_chat(prompt: Prompt, request: Request, current_user=Depends(get_cur
         
         # Use the enhanced agentic agent with AI magic features
         agent = get_enhanced_agentic_agent()
-        # Set the API token on the agent
-        agent._api_token = inferrix_token
+        # Pass the token to process_query - it will set the API token internally
         response = agent.process_query(prompt.query, prompt.user, prompt.device or "", inferrix_token)
         
         # Always return a string
@@ -445,5 +444,6 @@ if __name__ == "__main__":
 # FORCE RAILWAY REDEPLOYMENT - 2025-08-18 19:45:00 - AI agent token fix deployed
 # CRITICAL FIX: Railway is still using old code - Force redeploy now!
 # TIMESTAMP: 2025-08-18 20:06:00 - URGENT REDEPLOYMENT NEEDED
+# URGENT: 2025-08-18 20:30:00 - bcrypt fix + token fixes - Railway must redeploy NOW!
 
 
