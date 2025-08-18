@@ -105,7 +105,7 @@ def login(user: User):
     # Now authenticate with Inferrix API using the same credentials
     try:
         inferrix_login_data = {
-            "email": user.email,  # Use the same email from local login
+            "username": user.email,  # Use username as per Postman working example
             "password": user.password  # Use the same password from local login
         }
         
@@ -154,14 +154,14 @@ def login(user: User):
         
         if inferrix_response.status_code == 200:
             inferrix_data = inferrix_response.json()
-            inferrix_token = inferrix_data.get("token")
+            inferrix_token = inferrix_data.get("token")  # Get "token" field as per Postman response
             
             if inferrix_token:
                 print(f"[DEBUG] Successfully got Inferrix token: {inferrix_token[:50]}...")
                 return {
                     "access_token": token, 
                     "token_type": "bearer",
-                    "inferrix_token": inferrix_token
+                    "inferrix_token": inferrix_token  # Return as "inferrix_token" for frontend
                 }
             else:
                 print(f"[DEBUG] Warning: No token in Inferrix response. Full response: {inferrix_data}")

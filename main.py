@@ -210,7 +210,7 @@ def login(user: User):
                 # First, try to get Inferrix token using user's credentials
                 inferrix_response = requests.post(
                     "https://cloud.inferrix.com/api/auth/login",
-                    json={"email": user.email, "password": user.password},
+                    json={"username": user.email, "password": user.password},  # Use username as per Postman
                     headers={"Content-Type": "application/json"},
                     timeout=30
                 )
