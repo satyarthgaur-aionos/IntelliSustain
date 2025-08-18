@@ -335,7 +335,7 @@ def chat(prompt: Prompt, current_user=Depends(get_current_user_from_auth_db)):
         )
 
 @app.post("/chat/enhanced")
-def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user_from_auth_db)):
+def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user_from_auth_db), request: Request = None):
     """Process chat query through enhanced AI agent with AI magic features"""
     try:
         if not prompt.query.strip():
@@ -346,12 +346,28 @@ def enhanced_chat(prompt: Prompt, current_user=Depends(get_current_user_from_aut
         print(f"  - query: '{prompt.query}'")
         print(f"  - user: '{prompt.user}'")
         print(f"  - device: '{prompt.device}'")
+
+        # Extract Inferrix token from headers
+        inferrix_token = None
+        if request is not None:
+            header_token = request.headers.get("X-Inferrix-Token")
+            if header_token:
+                inferrix_token = header_token
+                print(f"[DEBUG] Enhanced chat - Token found in X-Inferrix-Token: {inferrix_token[:20]}...")
+            else:
+                auth_header = request.headers.get("Authorization")
+                if auth_header and auth_header.startswith("Bearer "):
+                    inferrix_token = auth_header[7:]
+                    print(f"[DEBUG] Enhanced chat - Token from Authorization header: {inferrix_token[:20]}...")
+                else:
+                    print("[DEBUG] Enhanced chat - No token found in headers")
         
         # Use enhanced agentic agent with AI magic features
         if AI_MAGIC_AVAILABLE and DATABASE_AVAILABLE:
             try:
                 agent = get_enhanced_agentic_agent()
-                response = agent.process_query(prompt.query, prompt.user, prompt.device or "")
+                # Pass token into agent so downstream API calls use it
+                response = agent.process_query(prompt.query, prompt.user, prompt.device or "", inferrix_token)
                 
                 # Apply AI Magic Core features
                 if conversation_memory:
