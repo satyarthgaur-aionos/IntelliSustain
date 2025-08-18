@@ -228,9 +228,10 @@ def enhanced_chat(prompt: Prompt, request: Request, current_user=Depends(get_cur
         if not prompt.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
         
-        # Enhanced logging for debugging
+        # Enhanced logging for debugging - DEPLOYMENT MARKER
         print(f"[DEBUG] Enhanced chat request from user: {prompt.user}")
         print(f"[DEBUG] Enhanced chat - Query: {prompt.query}")
+        print(f"[DEBUG] Enhanced chat - DEPLOYMENT MARKER: Debugging changes deployed")
         
         # Get the Inferrix token from the request headers
         inferrix_token = None
