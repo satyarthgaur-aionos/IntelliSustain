@@ -5598,3 +5598,4 @@ class EnhancedAgenticInferrixAgent:
 # Create global instance
 # FORCE RAILWAY REDEPLOYMENT - Latest token fixes applied
 enhanced_agentic_agent = EnhancedAgenticInferrixAgent() 
+# FORCE RAILWAY REDEPLOYMENT - 2025-08-18 19:29:14
