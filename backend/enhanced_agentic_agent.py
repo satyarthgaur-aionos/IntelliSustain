@@ -3128,7 +3128,15 @@ class EnhancedAgenticInferrixAgent:
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['filter', 'filter choke', 'choke'])]
             if any(phrase in user_query for phrase in ['temperature', 'temp']):
                 alarms = [a for a in alarms if alarm_matches_keywords(a, ['temperature', 'temp'])]
-            if 'today' in user_query:
+            # Check if user is asking for highest severity/priority alarms
+            highest_severity_keywords = ['highest severity', 'highest priority', 'highest risk', 'most critical', 'top priority', 'critical alarms', 'severity alarm', 'priority alarm']
+            is_highest_severity_query = any(phrase in user_query.lower() for phrase in highest_severity_keywords)
+            
+            # Apply today's filter for "right now" queries or explicit "today" requests
+            right_now_keywords = ['right now', 'currently', 'now', 'today', 'current']
+            should_filter_today = any(phrase in user_query.lower() for phrase in right_now_keywords) or is_highest_severity_query
+            
+            if should_filter_today:
                 import datetime
                 now = datetime.datetime.now()
                 start_of_day = datetime.datetime(now.year, now.month, now.day)
@@ -3136,17 +3144,16 @@ class EnhancedAgenticInferrixAgent:
                 end_ts = int(now.timestamp() * 1000)
                 alarms = [a for a in alarms if start_ts <= a.get('createdTime', 0) <= end_ts]
             
-            # Check if user is asking for highest severity/priority alarms
-            highest_severity_keywords = ['highest severity', 'highest priority', 'highest risk', 'most critical', 'top priority', 'critical alarms', 'severity alarm', 'priority alarm']
-            is_highest_severity_query = any(phrase in user_query.lower() for phrase in highest_severity_keywords)
-            
             # Check if user is asking for lowest severity/priority alarms
             lowest_severity_keywords = ['lowest severity', 'lowest priority', 'lowest risk', 'least critical', 'minor alarms', 'minor severity', 'low priority alarms']
             is_lowest_severity_query = any(phrase in user_query.lower() for phrase in lowest_severity_keywords)
             
             if alarms:
                 if is_highest_severity_query:
-                    return self._format_enhanced_alarm_summary(alarms)
+                    if should_filter_today:
+                        return f"🔍 **Highest Severity Alarms for Today ({datetime.datetime.now().strftime('%Y-%m-%d')}):**\n\n" + self._format_enhanced_alarm_summary(alarms)
+                    else:
+                        return self._format_enhanced_alarm_summary(alarms)
                 elif is_lowest_severity_query:
                     # Filter for MINOR alarms only (lowest severity currently in database)
                     minor_alarms = [a for a in alarms if a.get('severity', '').upper() == 'MINOR']
@@ -3157,11 +3164,14 @@ class EnhancedAgenticInferrixAgent:
                 else:
                     return self._format_enhanced_alarm_summary_with_reasoning(alarms)
             else:
-                return ("✅ **All systems are functioning properly!**\n\nNo active alarms found across the entire building, which indicates:\n"
-                        "• All equipment is operating normally\n"
-                        "• All sensors are reporting within acceptable ranges\n"
-                        "• No maintenance issues detected\n"
-                        "• Building systems are healthy and performing optimally")
+                if should_filter_today:
+                    return f"✅ **No alarms found for today ({datetime.datetime.now().strftime('%Y-%m-%d')})!**\n\nAll systems are functioning properly with no active alarms today, which indicates:\n• All equipment is operating normally\n• All sensors are reporting within acceptable ranges\n• No maintenance issues detected\n• Building systems are healthy and performing optimally"
+                else:
+                    return ("✅ **All systems are functioning properly!**\n\nNo active alarms found across the entire building, which indicates:\n"
+                            "• All equipment is operating normally\n"
+                            "• All sensors are reporting within acceptable ranges\n"
+                            "• No maintenance issues detected\n"
+                            "• Building systems are healthy and performing optimally")
         except Exception as e:
             return f"❌ Error fetching enhanced alarms: {str(e)}"
 
