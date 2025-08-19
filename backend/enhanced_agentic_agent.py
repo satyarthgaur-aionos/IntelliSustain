@@ -3133,8 +3133,15 @@ class EnhancedAgenticInferrixAgent:
             is_highest_severity_query = any(phrase in user_query.lower() for phrase in highest_severity_keywords)
             
             # Apply today's filter for "right now" queries or explicit "today" requests
-            right_now_keywords = ['right now', 'currently', 'now', 'today', 'current']
-            should_filter_today = any(phrase in user_query.lower() for phrase in right_now_keywords) or is_highest_severity_query
+            right_now_keywords = ['right now', 'currently', 'now', 'today']
+            past_keywords = ['past', 'history', 'previous', 'old', 'yesterday', 'last week', 'last month']
+            
+            # Check if user is asking for past/historical data
+            is_past_query = any(phrase in user_query.lower() for phrase in past_keywords)
+            
+            # Only apply today filter if explicitly asking for current/right now, not for past queries
+            should_filter_today = (any(phrase in user_query.lower() for phrase in right_now_keywords) or 
+                                 (is_highest_severity_query and not is_past_query))
             
             if should_filter_today:
                 import datetime
@@ -3152,6 +3159,8 @@ class EnhancedAgenticInferrixAgent:
                 if is_highest_severity_query:
                     if should_filter_today:
                         return f"🔍 **Highest Severity Alarms for Today ({datetime.datetime.now().strftime('%Y-%m-%d')}):**\n\n" + self._format_enhanced_alarm_summary(alarms)
+                    elif is_past_query:
+                        return f"📚 **Historical Highest Severity Alarms:**\n\n" + self._format_enhanced_alarm_summary(alarms)
                     else:
                         return self._format_enhanced_alarm_summary(alarms)
                 elif is_lowest_severity_query:
@@ -3166,6 +3175,8 @@ class EnhancedAgenticInferrixAgent:
             else:
                 if should_filter_today:
                     return f"✅ **No alarms found for today ({datetime.datetime.now().strftime('%Y-%m-%d')})!**\n\nAll systems are functioning properly with no active alarms today, which indicates:\n• All equipment is operating normally\n• All sensors are reporting within acceptable ranges\n• No maintenance issues detected\n• Building systems are healthy and performing optimally"
+                elif is_past_query:
+                    return "📚 **No historical alarms found!**\n\nNo past alarm records are available in the system."
                 else:
                     return ("✅ **All systems are functioning properly!**\n\nNo active alarms found across the entire building, which indicates:\n"
                             "• All equipment is operating normally\n"
