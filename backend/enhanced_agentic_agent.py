@@ -5514,7 +5514,7 @@ class EnhancedAgenticInferrixAgent:
             headers = ["Device Name", "Location", "Energy Metric", "Value", "Unit", "Timestamp"]
             rows = []
             
-            for device in devices[:20]:  # Limit to first 20 devices
+            for device in devices[:50]:  # Increased limit to check more devices
                 device_id = device.get('id', {}).get('id') if isinstance(device.get('id'), dict) else device.get('id')
                 device_name = device.get('name', 'Unknown')
                 
@@ -5539,41 +5539,47 @@ class EnhancedAgenticInferrixAgent:
                         if floor_match:
                             device_location = floor_match.group(1)
                     
-                    # Pattern 4: "IAQ Sensor V2 - 300180" -> Try to extract location from device properties
-                    elif 'IAQ Sensor' in device_name or 'Sensor' in device_name:
-                        # For sensors, try to get location from device properties if available
-                        if device_id:
-                            try:
-                                # Try to get device details to see if location is stored in properties
-                                device_details = self._make_api_request(f"user/devices/{device_id}", token=self._api_token)
-                                if device_details and isinstance(device_details, dict):
-                                    # Check for location in device properties
-                                    properties = device_details.get('properties', {})
-                                    if properties:
-                                        location_prop = properties.get('location') or properties.get('room') or properties.get('floor')
-                                        if location_prop:
-                                            device_location = str(location_prop)
-                            except:
-                                pass
-                        
-                        # If no location found in properties, try to extract from name
-                        if device_location == 'Unknown':
-                            # Try to extract any location-like pattern
-                            location_patterns = [
-                                r'(\d+(?:st|nd|rd|th)?\s*floor)',
-                                r'(room\s*\d+)',
-                                r'(building\s*\w+)',
-                                r'(area\s*\w+)',
-                                r'(wing\s*\w+)'
-                            ]
-                            for pattern in location_patterns:
-                                match = re.search(pattern, device_name, re.IGNORECASE)
-                                if match:
-                                    device_location = match.group(1).strip()
-                                    break
+                    # Pattern 4: "Lighting Controller V4 - 1006" -> "Lighting System"
+                    elif 'Lighting Controller' in device_name:
+                        device_location = 'Lighting System'
                     
-                    # Pattern 5: Generic location extraction for any device
-                    else:
+                    # Pattern 5: "IAQ Sensor V2 - 300180" -> "Air Quality Monitoring"
+                    elif 'IAQ Sensor' in device_name:
+                        device_location = 'Air Quality Monitoring'
+                    
+                    # Pattern 6: "RH/T Sensor" -> "Humidity/Temperature Monitoring"
+                    elif 'RH/T Sensor' in device_name:
+                        device_location = 'Humidity/Temperature Monitoring'
+                    
+                    # Pattern 7: "Distance Sensor" -> "Occupancy Monitoring"
+                    elif 'Distance Sensor' in device_name:
+                        device_location = 'Occupancy Monitoring'
+                    
+                    # Pattern 8: "Smoke Detector" -> "Fire Safety System"
+                    elif 'Smoke Detector' in device_name:
+                        device_location = 'Fire Safety System'
+                    
+                    # Pattern 9: "Thermostat" -> "HVAC System"
+                    elif 'Thermostat' in device_name:
+                        device_location = 'HVAC System'
+                    
+                    # Pattern 10: Try to extract location from device properties if available
+                    elif device_id:
+                        try:
+                            # Try to get device details to see if location is stored in properties
+                            device_details = self._make_api_request(f"user/devices/{device_id}", token=self._api_token)
+                            if device_details and isinstance(device_details, dict):
+                                # Check for location in device properties
+                                properties = device_details.get('properties', {})
+                                if properties:
+                                    location_prop = properties.get('location') or properties.get('room') or properties.get('floor')
+                                    if location_prop:
+                                        device_location = str(location_prop)
+                        except:
+                            pass
+                    
+                    # Pattern 11: Generic location extraction for any device
+                    if device_location == 'Unknown':
                         # Try to extract any location-like pattern from device name
                         location_patterns = [
                             r'(\d+(?:st|nd|rd|th)?\s*floor)',
@@ -5603,6 +5609,8 @@ class EnhancedAgenticInferrixAgent:
                             # Find energy-related keys
                             available_energy_keys = [key for key in available_keys if any(energy_term in key.lower() 
                                                 for energy_term in energy_keys)]
+                            
+                            print(f"[DEBUG] Energy consumption - Device {device_name}: Found {len(available_energy_keys)} energy keys: {available_energy_keys}")
                             
                             if available_energy_keys:
                                 # Get latest energy data
