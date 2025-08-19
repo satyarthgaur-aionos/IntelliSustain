@@ -1972,7 +1972,37 @@ class EnhancedAgenticInferrixAgent:
             created_time = alarm.get('createdTime', 0)
             dt = datetime.datetime.fromtimestamp(created_time/1000).strftime("%Y-%m-%d %H:%M") if created_time else "?"
             device_name = alarm.get('originatorName', 'Unknown')
+            
+            # Extract location from device name if no location field exists
             location = alarm.get('location', alarm.get('originatorLocation', ''))
+            if not location and device_name:
+                # Try to extract location from device name patterns
+                if '2F-' in device_name or '2nd' in device_name:
+                    location = '2nd Floor'
+                elif '3F-' in device_name or '3rd' in device_name:
+                    location = '3rd Floor'
+                elif '1F-' in device_name or '1st' in device_name:
+                    location = '1st Floor'
+                elif 'Room' in device_name:
+                    # Extract room number from device name
+                    import re
+                    room_match = re.search(r'Room\s*(\d+)', device_name)
+                    if room_match:
+                        room_num = room_match.group(1)
+                        location = f'Room {room_num}'
+                    else:
+                        location = 'Unknown Room'
+                elif 'IAQ Sensor' in device_name:
+                    location = 'Air Quality Monitoring'
+                elif 'RH/T Sensor' in device_name:
+                    location = 'Humidity/Temperature Monitoring'
+                elif 'Distance Sensor' in device_name:
+                    location = 'Occupancy Monitoring'
+                elif 'Lighting Controller' in device_name:
+                    location = 'Lighting System'
+                else:
+                    location = 'General Area'
+            
             alarm_type = alarm.get('type', '?')
             # If alarm_type is temperature, ensure value has '°C'
             if alarm_type.lower() in ["temperature", "room temperature", "temp"]:
@@ -4859,7 +4889,37 @@ class EnhancedAgenticInferrixAgent:
                     created_time = alarm.get('createdTime', 0)
                     dt = datetime.datetime.fromtimestamp(created_time/1000).strftime("%Y-%m-%d %H:%M") if created_time else "?"
                     device_name = alarm.get('originatorName', 'Unknown')
+                    
+                    # Extract location from device name if no location field exists
                     location = alarm.get('location', alarm.get('originatorLocation', ''))
+                    if not location and device_name:
+                        # Try to extract location from device name patterns
+                        if '2F-' in device_name or '2nd' in device_name:
+                            location = '2nd Floor'
+                        elif '3F-' in device_name or '3rd' in device_name:
+                            location = '3rd Floor'
+                        elif '1F-' in device_name or '1st' in device_name:
+                            location = '1st Floor'
+                        elif 'Room' in device_name:
+                            # Extract room number from device name
+                            import re
+                            room_match = re.search(r'Room\s*(\d+)', device_name)
+                            if room_match:
+                                room_num = room_match.group(1)
+                                location = f'Room {room_num}'
+                            else:
+                                location = 'Unknown Room'
+                        elif 'IAQ Sensor' in device_name:
+                            location = 'Air Quality Monitoring'
+                        elif 'RH/T Sensor' in device_name:
+                            location = 'Humidity/Temperature Monitoring'
+                        elif 'Distance Sensor' in device_name:
+                            location = 'Occupancy Monitoring'
+                        elif 'Lighting Controller' in device_name:
+                            location = 'Lighting System'
+                        else:
+                            location = 'General Area'
+                    
                     alarm_type_name = alarm.get('type', '?')
                     severity = alarm.get('severity', '?')
                     status = alarm.get('status', '?')
