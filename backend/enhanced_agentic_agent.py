@@ -1261,15 +1261,34 @@ class EnhancedAgenticInferrixAgent:
             return result
         # --- Enhanced Hindi/Hinglish regex patterns for temperature queries ---
         hindi_temp_patterns = [
+            # Original patterns
             r"(?:तापमान|temperature) (?:क्या है|कैसा है|दिखाओ|show|check) ?([\w\- ]+)?",
             r"([\w\- ]+)? में (?:तापमान|temperature) (?:क्या है|कैसा है|दिखाओ|show|check)",
+            # New flexible patterns for broken/partial Hinglish
+            r"(?:tapmaan|taapman|tapman|तापमान|temperature) ?([\w\- ]+)?",
+            r"([\w\- ]+)? (?:tapmaan|taapman|tapman|तापमान|temperature)",
+            # Pattern for "tapmaan 2nd floor room 50" type queries
+            r"(?:tapmaan|taapman|tapman|तापमान|temperature) ([\w\- ]+ (?:floor|f) [\w\- ]+)",
+            r"(?:tapmaan|taapman|tapman|तापमान|temperature) ([\w\- ]+ (?:room|kamra) [\w\- ]+)",
         ]
         for pattern in hindi_temp_patterns:
             match = re.search(pattern, user_query, re.IGNORECASE)
             if match:
                 location_phrase = match.group(1) or device or ''
                 location_phrase = location_phrase.strip()
+                
+                # If location_phrase is empty, try to extract from the full query
+                if not location_phrase:
+                    # Try to extract location from the full query after removing temperature keywords
+                    temp_keywords = ['tapmaan', 'taapman', 'tapman', 'तापमान', 'temperature']
+                    query_clean = user_query.lower()
+                    for keyword in temp_keywords:
+                        query_clean = query_clean.replace(keyword, '').strip()
+                    location_phrase = query_clean
+                
                 location_phrase = map_hindi_to_english(location_phrase)
+                print(f"[DEBUG] Hinglish temp query - Extracted location: '{location_phrase}'")
+                
                 device_id = self._map_device_name_to_id(location_phrase)
                 if not device_id:
                     return f"❌ Unable to find a device for '{location_phrase or user_query}'. Please check the room/device name."
@@ -1283,12 +1302,25 @@ class EnhancedAgenticInferrixAgent:
         # BUT exclude fan speed control commands
         telemetry_keywords = ['humidity', 'temperature', 'battery', 'pressure', 'setpoint', 'speed']
         
+        # Enhanced Hinglish temperature keyword detection
+        hinglish_temp_keywords = ['tapmaan', 'taapman', 'tapman', 'तापमान']
+        has_hinglish_temp = any(keyword in user_query.lower() for keyword in hinglish_temp_keywords)
+        
         # Check if this is a fan speed control command first (more specific)
         control_action_keywords = ['increase', 'set', 'change', 'adjust', 'turn', 'switch']
         is_fan_speed_control = any(kw in user_query.lower() for kw in control_action_keywords) and 'speed' in user_query.lower()
         
-        if not is_fan_speed_control and any(kw in user_query.lower() for kw in telemetry_keywords):
-            device_phrase = device or user_query
+        if not is_fan_speed_control and (any(kw in user_query.lower() for kw in telemetry_keywords) or has_hinglish_temp):
+            # For Hinglish temperature queries, try to extract location from the full query
+            if has_hinglish_temp:
+                # Remove temperature keywords and use the rest as location
+                query_clean = user_query.lower()
+                for keyword in hinglish_temp_keywords:
+                    query_clean = query_clean.replace(keyword, '').strip()
+                device_phrase = query_clean or device or user_query
+                print(f"[DEBUG] Hinglish temp fallback - Using location: '{device_phrase}'")
+            else:
+                device_phrase = device or user_query
             device_id = self._map_device_name_to_id(device_phrase)
             if device_id:
                 for metric in telemetry_keywords:
@@ -2458,6 +2490,10 @@ class EnhancedAgenticInferrixAgent:
         # Get all devices
         devices = self._get_devices_list() or []
         
+        # Debug logging for device matching
+        print(f"[DEBUG] Device matching - Input: '{device_name}'")
+        print(f"[DEBUG] Device matching - Total devices: {len(devices)}")
+        
         # PATCH: Room alias mapping
         device_name_lower = device_name.lower()
         if device_name_lower in self.ROOM_ALIASES:
@@ -2494,14 +2530,27 @@ class EnhancedAgenticInferrixAgent:
             room_match = re.search(r'room(\d+)', normalized_input)
             if room_match:
                 room_number = room_match.group(1)
+                print(f"[DEBUG] Device matching - Found room number: {room_number}")
+                # First try exact room number match
                 for norm_name, devs in norm_map.items():
                     if f'room{room_number}' in norm_name:
                         best = sorted(devs, key=lambda x: x[1])[0][0]
+                        print(f"[DEBUG] Device matching - Exact room match found: {norm_name} -> {best}")
                         return best
+                
+                # If no exact match, try floor + room combination
+                floor_match = re.search(r'(\d+)(?:st|nd|rd|th)?\s*(?:floor|f)', normalized_input, re.IGNORECASE)
+                if floor_match:
+                    floor = floor_match.group(1)
+                    floor_pattern = f"{floor}froom{room_number}"
+                    for norm_name, devs in norm_map.items():
+                        if floor_pattern in norm_name:
+                            best = sorted(devs, key=lambda x: x[1])[0][0]
+                            return best
         
-        # 1c. Floor-based fuzzy matching (e.g., "3rd floor room 50")
+        # 1d. Floor-based fuzzy matching (e.g., "3rd floor room 50") - ONLY if no specific room number found
         floor_match = re.match(r'(\d+)f', normalized_input)
-        if floor_match:
+        if floor_match and 'room' not in normalized_input:  # Only use fuzzy matching if no specific room mentioned
             floor = floor_match.group(1)
             floor_pattern = f"{floor}froom"
             floor_devices = [d for d in devices if floor_pattern in normalize_location_name(d.get('name',''))]
