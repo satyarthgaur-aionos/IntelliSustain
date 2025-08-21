@@ -1264,39 +1264,54 @@ class EnhancedAgenticInferrixAgent:
             # Original patterns
             r"(?:तापमान|temperature) (?:क्या है|कैसा है|दिखाओ|show|check) ?([\w\- ]+)?",
             r"([\w\- ]+)? में (?:तापमान|temperature) (?:क्या है|कैसा है|दिखाओ|show|check)",
-            # New flexible patterns for broken/partial Hinglish
-            r"(?:tapmaan|taapman|tapman|तापमान|temperature) ?([\w\- ]+)?",
-            r"([\w\- ]+)? (?:tapmaan|taapman|tapman|तापमान|temperature)",
+            # Pattern for "Room 50 2nd floor ka tapmaan kya ha" type queries
+            r"(.*?(?:room|floor|f)\s*\d+.*?) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
+            r"(.*?(?:floor|f)\s*\d+.*?) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
+            r"(.*?room\s*\d+.*?) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
             # Pattern for "tapmaan 2nd floor room 50" type queries
             r"(?:tapmaan|taapman|tapman|तापमान|temperature) ([\w\- ]+ (?:floor|f) [\w\- ]+)",
             r"(?:tapmaan|taapman|tapman|तापमान|temperature) ([\w\- ]+ (?:room|kamra) [\w\- ]+)",
+            # Fallback patterns for broken/partial Hinglish
+            r"(?:tapmaan|taapman|tapman|तापमान|temperature) ?([\w\- ]+)?",
+            r"([\w\- ]+)? (?:tapmaan|taapman|tapman|तापमान|temperature)",
         ]
-        for pattern in hindi_temp_patterns:
-            match = re.search(pattern, user_query, re.IGNORECASE)
-            if match:
-                location_phrase = match.group(1) or device or ''
-                location_phrase = location_phrase.strip()
-                
-                # If location_phrase is empty, try to extract from the full query
-                if not location_phrase:
-                    # Try to extract location from the full query after removing temperature keywords
-                    temp_keywords = ['tapmaan', 'taapman', 'tapman', 'तापमान', 'temperature']
-                    query_clean = user_query.lower()
-                    for keyword in temp_keywords:
-                        query_clean = query_clean.replace(keyword, '').strip()
-                    location_phrase = query_clean
-                
-                location_phrase = map_hindi_to_english(location_phrase)
-                print(f"[DEBUG] Hinglish temp query - Extracted location: '{location_phrase}'")
-                
-                device_id = self._map_device_name_to_id(location_phrase)
-                if not device_id:
-                    return f"❌ Unable to find a device for '{location_phrase or user_query}'. Please check the room/device name."
-                value = self._get_device_telemetry_data(device_id, 'temperature')
-                value_str = str(value)
-                if not value_str.strip().endswith('°C'):
-                    value_str = f"{value_str}°C"
-                return f"🌡️ Temperature for {location_phrase or device_id}: {value_str}"
+        # Only process Hinglish patterns if the query contains Hindi/Hinglish keywords
+        has_hindi_keywords = any(keyword in user_query.lower() for keyword in ['tapmaan', 'taapman', 'tapman', 'तापमान', 'ka', 'ki', 'ke', 'kya', 'hai', 'ha'])
+        
+        if has_hindi_keywords:
+            for i, pattern in enumerate(hindi_temp_patterns):
+                match = re.search(pattern, user_query, re.IGNORECASE)
+                if match:
+                    print(f"[DEBUG] Hinglish pattern {i} matched: '{pattern}' -> groups: {match.groups()}")
+                    location_phrase = match.group(1) or device or ''
+                    location_phrase = location_phrase.strip()
+                    
+                    # If location_phrase is empty, try to extract from the full query
+                    if not location_phrase:
+                        # Try to extract location from the full query after removing temperature keywords
+                        temp_keywords = ['tapmaan', 'taapman', 'tapman', 'तापमान', 'temperature']
+                        query_clean = user_query.lower()
+                        for keyword in temp_keywords:
+                            query_clean = query_clean.replace(keyword, '').strip()
+                        location_phrase = query_clean
+                    
+                    location_phrase = map_hindi_to_english(location_phrase)
+                    print(f"[DEBUG] Hinglish temp query - Extracted location: '{location_phrase}'")
+                    
+                    device_id = self._map_device_name_to_id(location_phrase)
+                    if not device_id:
+                        return f"❌ Unable to find a device for '{location_phrase or user_query}'. Please check the room/device name."
+                    value = self._get_device_telemetry_data(device_id, 'temperature')
+                    value_str = str(value)
+                    if not value_str.strip().endswith('°C'):
+                        value_str = f"{value_str}°C"
+                    
+                    # Get device name for better response
+                    device_name = self._get_device_name_by_id(device_id)
+                    if device_name:
+                        return f"🌡️ Temperature for {device_name} ({device_id}): {value_str}"
+                    else:
+                        return f"🌡️ Temperature for {location_phrase or device_id}: {value_str}"
 
         # PATCH: Prioritize telemetry fetch for telemetry keywords (move to very top)
         # BUT exclude fan speed control commands
@@ -1304,6 +1319,8 @@ class EnhancedAgenticInferrixAgent:
         
         # Enhanced Hinglish temperature keyword detection
         hinglish_temp_keywords = ['tapmaan', 'taapman', 'tapman', 'तापमान']
+        hinglish_question_words = ['kya', 'kaisa', 'kaise', 'क्या', 'कैसा', 'कैसे']
+        hinglish_auxiliary_words = ['ha', 'hai', 'h', 'है', 'हैं']
         has_hinglish_temp = any(keyword in user_query.lower() for keyword in hinglish_temp_keywords)
         
         # Check if this is a fan speed control command first (more specific)
@@ -1313,11 +1330,33 @@ class EnhancedAgenticInferrixAgent:
         if not is_fan_speed_control and (any(kw in user_query.lower() for kw in telemetry_keywords) or has_hinglish_temp):
             # For Hinglish temperature queries, try to extract location from the full query
             if has_hinglish_temp:
-                # Remove temperature keywords and use the rest as location
-                query_clean = user_query.lower()
-                for keyword in hinglish_temp_keywords:
-                    query_clean = query_clean.replace(keyword, '').strip()
-                device_phrase = query_clean or device or user_query
+                # Try to extract location before the Hindi words
+                query_lower = user_query.lower()
+                
+                # Look for patterns like "Room 50 2nd floor ka tapmaan kya hai"
+                # Extract everything before "ka tapmaan" or similar
+                temp_patterns = [
+                    r'(.+?)\s+(?:ka|ki|ke)\s+(?:tapmaan|taapman|tapman|तापमान|temperature)',
+                    r'(.+?)\s+(?:tapmaan|taapman|tapman|तापमान|temperature)',
+                ]
+                
+                device_phrase = None
+                for pattern in temp_patterns:
+                    match = re.search(pattern, query_lower)
+                    if match:
+                        device_phrase = match.group(1).strip()
+                        break
+                
+                # If no pattern match, fall back to removing keywords
+                if not device_phrase:
+                    query_clean = query_lower
+                    for keyword in hinglish_temp_keywords + hinglish_question_words + hinglish_auxiliary_words:
+                        query_clean = query_clean.replace(keyword, '').strip()
+                    # Also remove common Hindi connectors
+                    query_clean = query_clean.replace('ka', '').replace('ki', '').replace('ke', '').replace('का', '').replace('की', '').replace('के', '').strip()
+                    device_phrase = query_clean
+                
+                device_phrase = device_phrase or device or user_query
                 print(f"[DEBUG] Hinglish temp fallback - Using location: '{device_phrase}'")
             else:
                 device_phrase = device or user_query
