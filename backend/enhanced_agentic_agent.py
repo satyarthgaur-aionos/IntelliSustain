@@ -3133,7 +3133,7 @@ class EnhancedAgenticInferrixAgent:
             is_highest_severity_query = any(phrase in user_query.lower() for phrase in highest_severity_keywords)
             
             # Apply today's filter for "right now" queries or explicit "today" requests
-            right_now_keywords = ['right now', 'currently', 'now', 'today']
+            right_now_keywords = ['right now', 'currently', 'now', 'today', 'at present']
             past_keywords = ['past', 'history', 'previous', 'old', 'yesterday', 'last week', 'last month']
             
             # Check if user is asking for past/historical data
