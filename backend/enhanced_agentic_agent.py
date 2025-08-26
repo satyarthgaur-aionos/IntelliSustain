@@ -105,8 +105,9 @@ def normalize_location_name(text):
     }
     for k, v in floor_map.items():
         text = re.sub(r'\b' + re.escape(k) + r'\b', v, text)
-    # Normalize 'room no.' and 'room'
+    # Normalize 'room no.' and 'room number' to 'room'
     text = re.sub(r'room\s*no\.?', 'room', text)
+    text = re.sub(r'room\s*number', 'room', text)
     # Insert spaces between letters and numbers
     text = re.sub(r'([a-z])([0-9])', r'\1 \2', text)
     text = re.sub(r'([0-9])([a-z])', r'\1 \2', text)
