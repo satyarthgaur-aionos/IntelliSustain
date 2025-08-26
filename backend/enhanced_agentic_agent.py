@@ -1268,11 +1268,16 @@ class EnhancedAgenticInferrixAgent:
             r"(.*?(?:room|floor|f)\s*\d+.*?) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
             r"(.*?(?:floor|f)\s*\d+.*?) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
             r"(.*?room\s*\d+.*?) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
+            # Pattern for "room number 50 2nd floor ka tapman kya hai" type queries
+            r"(.*?(?:room\s*number|room|floor|f)\s*\d+.*?) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
             # Pattern for "tapmaan 2nd floor room 50" type queries
             r"(?:tapmaan|taapman|tapman|तापमान|temperature) ([\w\- ]+ (?:floor|f) [\w\- ]+)",
             r"(?:tapmaan|taapman|tapman|तापमान|temperature) ([\w\- ]+ (?:room|kamra) [\w\- ]+)",
-            # Fallback patterns for broken/partial Hinglish
-            r"(?:tapmaan|taapman|tapman|तापमान|temperature) ?([\w\- ]+)?",
+            # More specific patterns to avoid capturing question words
+            r"([\w\- ]+(?:room|floor|f)\s*\d+[\w\- ]*) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
+            r"([\w\- ]+\d+[\w\- ]*(?:room|floor|f)[\w\- ]*) (?:ka|ki|ke) (?:tapmaan|taapman|tapman|temperature)",
+            # Fallback patterns for broken/partial Hinglish (but exclude question words)
+            r"(?:tapmaan|taapman|tapman|तापमान|temperature) (?!kya|kaisa|kaise|क्या|कैसा|कैसे)([\w\- ]+)?",
             r"([\w\- ]+)? (?:tapmaan|taapman|tapman|तापमान|temperature)",
         ]
         # Only process Hinglish patterns if the query contains Hindi/Hinglish keywords
@@ -1286,14 +1291,34 @@ class EnhancedAgenticInferrixAgent:
                     location_phrase = match.group(1) or device or ''
                     location_phrase = location_phrase.strip()
                     
-                    # If location_phrase is empty, try to extract from the full query
-                    if not location_phrase:
-                        # Try to extract location from the full query after removing temperature keywords
-                        temp_keywords = ['tapmaan', 'taapman', 'tapman', 'तापमान', 'temperature']
-                        query_clean = user_query.lower()
-                        for keyword in temp_keywords:
-                            query_clean = query_clean.replace(keyword, '').strip()
-                        location_phrase = query_clean
+                    # If location_phrase is empty or contains question words, try to extract from the full query
+                    if not location_phrase or any(qw in location_phrase.lower() for qw in ['kya', 'kaisa', 'kaise', 'क्या', 'कैसा', 'कैसे', 'hai', 'ha', 'है']):
+                        # Try to extract location from the full query before the Hindi words
+                        query_lower = user_query.lower()
+                        
+                        # Look for patterns like "Room 50 2nd floor ka tapmaan kya hai"
+                        # Extract everything before "ka tapmaan" or similar
+                        temp_patterns = [
+                            r'(.+?)\s+(?:ka|ki|ke)\s+(?:tapmaan|taapman|tapman|तापमान|temperature)',
+                            r'(.+?)\s+(?:tapmaan|taapman|tapman|तापमान|temperature)',
+                        ]
+                        
+                        for pattern in temp_patterns:
+                            match = re.search(pattern, query_lower)
+                            if match:
+                                location_phrase = match.group(1).strip()
+                                break
+                        
+                        # If no pattern match, fall back to removing keywords
+                        if not location_phrase or any(qw in location_phrase.lower() for qw in ['kya', 'kaisa', 'kaise', 'क्या', 'कैसा', 'कैसे', 'hai', 'ha', 'है']):
+                            temp_keywords = ['tapmaan', 'taapman', 'tapman', 'तापमान', 'temperature']
+                            question_words = ['kya', 'kaisa', 'kaise', 'क्या', 'कैसा', 'कैसे', 'hai', 'ha', 'है']
+                            hindi_connectors = ['ka', 'ki', 'ke', 'का', 'की', 'के']
+                            
+                            query_clean = user_query.lower()
+                            for keyword in temp_keywords + question_words + hindi_connectors:
+                                query_clean = query_clean.replace(keyword, '').strip()
+                            location_phrase = query_clean
                     
                     location_phrase = map_hindi_to_english(location_phrase)
                     print(f"[DEBUG] Hinglish temp query - Extracted location: '{location_phrase}'")
