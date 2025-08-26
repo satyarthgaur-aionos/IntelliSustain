@@ -13,7 +13,12 @@ function App() {
     const inferrixToken = localStorage.getItem("inferrix_token");
     if (jwt && inferrixToken) {
       setIsAuthenticated(true);
-      fetch('/inferrix/devices', {
+      // Use localhost for local development, relative URL for production
+      const baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? 'http://localhost:8000' 
+        : '';
+      
+      fetch(`${baseURL}/inferrix/devices`, {
         headers: {
           'Authorization': `Bearer ${jwt}`,
           'X-Inferrix-Token': inferrixToken
@@ -29,8 +34,13 @@ function App() {
   const handleLogin = (token) => {
     setIsAuthenticated(true);
     const inferrixToken = localStorage.getItem("inferrix_token");
+    // Use localhost for local development, relative URL for production
+    const baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+      ? 'http://localhost:8000' 
+      : '';
+    
     // Fetch devices with proper authentication
-    fetch('/inferrix/devices', {
+    fetch(`${baseURL}/inferrix/devices`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'X-Inferrix-Token': inferrixToken
@@ -52,16 +62,16 @@ function App() {
 
   return (
     <div className="App" style={{ minHeight: "100vh", background: "#f8fafc" }}>
-      {isAuthenticated ? (
-        <>
-          <Chat
-            devices={devices}
-            selectedDeviceId={selectedDeviceId}
-            onSelectDevice={setSelectedDeviceId}
-            onLogout={handleLogout}
-          />
-        </>
-      ) : (
+             {isAuthenticated ? (
+         <>
+           <Chat
+             devices={devices}
+             selectedDeviceId={selectedDeviceId}
+             onSelectDevice={setSelectedDeviceId}
+             onLogout={handleLogout}
+           />
+         </>
+       ) : (
         // Pass onLoginSuccess instead of onLogin
         <Login onLoginSuccess={handleLogin} />
       )}

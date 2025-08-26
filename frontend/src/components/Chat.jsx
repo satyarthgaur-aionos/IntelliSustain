@@ -191,41 +191,223 @@ function getMessageStyle(text) {
 }
 
 // Voice Recognition Component
-function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupported }) {
+function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupported, language = 'en-IN' }) {
   const recognitionRef = useRef(null);
   const [interimTranscript, setInterimTranscript] = useState("");
+  const [confidence, setConfidence] = useState(0);
+  const [suggestions, setSuggestions] = useState([]);
+  const [pauseTimer, setPauseTimer] = useState(null);
+  const [accumulatedTranscript, setAccumulatedTranscript] = useState("");
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
     if (SpeechRecognition && isSupported) {
       recognitionRef.current = new SpeechRecognition();
+      
+      // Enhanced configuration for better accuracy and pause handling
       recognitionRef.current.continuous = true; // Keep listening after pauses
       recognitionRef.current.interimResults = true; // Enable interim results
-      recognitionRef.current.lang = 'en-IN'; // Use Indian English for better accent support
-
+      recognitionRef.current.lang = language; // Use specified language for better accent support
+      
+             // Additional settings for improved accuracy
+       recognitionRef.current.maxAlternatives = 5; // Get more alternatives for better accuracy
+       // Note: grammars property is not supported in all browsers, so we skip it
+      
+      // Enhanced pause handling - extend timeout for Indian English speakers
+      if (recognitionRef.current.timeout !== undefined) {
+        recognitionRef.current.timeout = 15000; // 15 seconds timeout
+      }
+      
+      // Enhanced result handling with confidence scoring
       recognitionRef.current.onresult = (event) => {
-        let transcript = '';
+        let finalTranscript = '';
+        let interimTranscript = '';
+        let highestConfidence = 0;
+        let alternatives = [];
+
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          transcript += event.results[i][0].transcript;
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          const confidence = result[0].confidence || 0;
+          
+          if (result.isFinal) {
+            finalTranscript += transcript;
+            highestConfidence = Math.max(highestConfidence, confidence);
+            
+            // Collect alternatives for better suggestions
+            if (result.length > 1) {
+              for (let j = 1; j < Math.min(result.length, 3); j++) {
+                alternatives.push({
+                  text: result[j].transcript,
+                  confidence: result[j].confidence || 0
+                });
+              }
+            }
+          } else {
+            interimTranscript += transcript;
+          }
         }
-        setInterimTranscript(transcript);
-        if (event.results[event.results.length - 1].isFinal) {
-          onTranscript(transcript.trim());
-          setIsListening(false);
-          setInterimTranscript("");
+
+        setInterimTranscript(interimTranscript);
+        setConfidence(highestConfidence);
+        setSuggestions(alternatives);
+
+        if (finalTranscript) {
+          // Accumulate transcript to handle pauses - DON'T process immediately
+          const newAccumulated = accumulatedTranscript + (accumulatedTranscript ? ' ' : '') + finalTranscript;
+          setAccumulatedTranscript(newAccumulated);
+          
+          // Clear pause timer and set a new one
+          if (pauseTimer) {
+            clearTimeout(pauseTimer);
+          }
+          
+          // Only process after a longer pause to allow for multiple speech segments
+          const newPauseTimer = setTimeout(() => {
+            // After 15 seconds of pause, process the accumulated transcript
+            // This allows for multiple pauses while still processing eventually
+            if (newAccumulated.trim()) {
+              const processedTranscript = postProcessTranscript(newAccumulated);
+              onTranscript(processedTranscript.trim());
+              setIsListening(false);
+              setInterimTranscript("");
+              setConfidence(0);
+              setSuggestions([]);
+              setAccumulatedTranscript("");
+            }
+          }, 15000); // 15 second pause tolerance for multiple thinking pauses
+          
+          setPauseTimer(newPauseTimer);
         }
       };
+
+      // Enhanced error handling with user guidance
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
         setInterimTranscript("");
+        setConfidence(0);
+        setSuggestions([]);
       };
+
       recognitionRef.current.onend = () => {
+        // If we have accumulated transcript, process it
+        if (accumulatedTranscript.trim()) {
+          const processedTranscript = postProcessTranscript(accumulatedTranscript);
+          onTranscript(processedTranscript.trim());
+        }
+        
         setIsListening(false);
         setInterimTranscript("");
+        setConfidence(0);
+        setSuggestions([]);
+        setAccumulatedTranscript("");
+        
+        // Clear pause timer
+        if (pauseTimer) {
+          clearTimeout(pauseTimer);
+          setPauseTimer(null);
+        }
       };
     }
-  }, [onTranscript, setIsListening, isSupported]);
+  }, [onTranscript, setIsListening, isSupported, language]);
+
+  // Post-process transcript for better accuracy
+  const postProcessTranscript = (transcript) => {
+    let processed = transcript;
+    
+    // Common speech recognition corrections
+    const corrections = {
+      'minor': 'minor',
+      'miner': 'minor',
+      'myner': 'minor',
+      'temperature': 'temperature',
+      'temperatures': 'temperature',
+      'temp': 'temperature',
+      'thermostat': 'thermostat',
+      'thermostats': 'thermostat',
+      'alarm': 'alarm',
+      'alarms': 'alarm',
+      'energy': 'energy',
+      'energies': 'energy',
+      'consumption': 'consumption',
+      'consumptions': 'consumption',
+      'floor': 'floor',
+      'floors': 'floor',
+      'room': 'room',
+      'rooms': 'room',
+      'second': '2nd',
+      'third': '3rd',
+      'fourth': '4th',
+      'fifth': '5th',
+      'first': '1st',
+      'right now': 'right now',
+      'rightnow': 'right now',
+      'at present': 'at present',
+      'atpresent': 'at present',
+      'currently': 'currently',
+      'now': 'now',
+      'today': 'today',
+      'past': 'past',
+      'history': 'history',
+      'previous': 'previous',
+      'yesterday': 'yesterday',
+      'last week': 'last week',
+      'last month': 'last month',
+      'highest': 'highest',
+      'highest severity': 'highest severity',
+      'critical': 'critical',
+      'major': 'major',
+      'warning': 'warning',
+      'info': 'info',
+      'show': 'show',
+      'display': 'display',
+      'get': 'get',
+      'fetch': 'fetch',
+      'check': 'check',
+      'what is': 'what is',
+      'whats': 'what is',
+      'what\'s': 'what is',
+      'how is': 'how is',
+      'how\'s': 'how is',
+      'tell me': 'tell me',
+      'give me': 'give me'
+    };
+
+    // Apply corrections
+    Object.entries(corrections).forEach(([incorrect, correct]) => {
+      const regex = new RegExp(`\\b${incorrect}\\b`, 'gi');
+      processed = processed.replace(regex, correct);
+    });
+
+    // Fix common punctuation issues
+    processed = processed.replace(/\s+/g, ' '); // Remove extra spaces
+    processed = processed.replace(/\s+([,.!?])/g, '$1'); // Fix spacing around punctuation
+    
+    // Remove multiple spaces and clean up
+    processed = processed.trim();
+    
+    // Additional filler word removal using regex patterns
+    const fillerPatterns = [
+      /\b(?:hmm+|um+|uh+|ah+|err+|er+|erm+|uhm+|uhmm+|huh+|oh+|wow+)\b/gi,
+      /\b(?:yeah|yep|nope|sure|alright|i mean|i think|i guess|sort of|kind of|you see|let me see|let me think)\b/gi,
+      /\b(?:actually|basically|you know|like|so|okay|ok|right|well)\b/gi
+    ];
+    
+    fillerPatterns.forEach(pattern => {
+      processed = processed.replace(pattern, '');
+    });
+    
+    // Clean up any remaining extra spaces after filler removal
+    processed = processed.replace(/\s+/g, ' ').trim();
+    
+    // Log the correction for debugging
+    if (processed !== transcript) {
+      console.log(`Voice correction: "${transcript}" → "${processed}"`);
+    }
+    
+    return processed;
+  };
 
   const startListening = () => {
     if (recognitionRef.current && isSupported) {
@@ -233,6 +415,15 @@ function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupport
         recognitionRef.current.start();
         setIsListening(true);
         setInterimTranscript("");
+        setConfidence(0);
+        setSuggestions([]);
+        setAccumulatedTranscript("");
+        
+        // Clear any existing pause timer
+        if (pauseTimer) {
+          clearTimeout(pauseTimer);
+          setPauseTimer(null);
+        }
       } catch (error) {
         console.error('Failed to start speech recognition:', error);
         setIsListening(false);
@@ -243,8 +434,24 @@ function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupport
   const stopListening = () => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
+      
+      // Process any accumulated transcript immediately
+      if (accumulatedTranscript.trim()) {
+        const processedTranscript = postProcessTranscript(accumulatedTranscript);
+        onTranscript(processedTranscript.trim());
+      }
+      
       setIsListening(false);
       setInterimTranscript("");
+      setConfidence(0);
+      setSuggestions([]);
+      setAccumulatedTranscript("");
+      
+      // Clear pause timer
+      if (pauseTimer) {
+        clearTimeout(pauseTimer);
+        setPauseTimer(null);
+      }
     }
   };
 
@@ -274,9 +481,27 @@ function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupport
           </svg>
         )}
       </button>
-      {isListening && interimTranscript && (
-        <div className="mt-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded shadow">
-          {interimTranscript}
+      {/* Voice input status and guidance */}
+      {isListening && (
+        <div className="mt-2 text-center">
+          <div className="text-xs sm:text-sm text-red-600 animate-pulse mb-1">
+            🎤 Listening... Speak clearly
+          </div>
+          {confidence > 0 && (
+            <div className="text-xs text-gray-500">
+              Confidence: {Math.round(confidence * 100)}%
+            </div>
+          )}
+          {interimTranscript && (
+            <div className="mt-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded shadow max-w-xs">
+              {interimTranscript}
+            </div>
+          )}
+          {suggestions.length > 0 && (
+            <div className="mt-1 text-xs text-blue-600">
+              Alternatives: {suggestions.map(s => s.text).join(', ')}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -466,6 +691,8 @@ export default function Chat({ devices, selectedDeviceId, onSelectDevice, onLogo
         </button>
         <VoiceRecognition onTranscript={setQuery} isListening={isListening} setIsListening={setIsListening} isSupported={isSupported} />
       </div>
+      
+      
     </div>
   );
 }

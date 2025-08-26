@@ -7,38 +7,405 @@ import Logo from "./Logo";
 function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupported, language }) {
   const recognitionRef = useRef(null);
   const [interimTranscript, setInterimTranscript] = useState("");
+  const [confidence, setConfidence] = useState(0);
+  const [suggestions, setSuggestions] = useState([]);
+  const [pauseTimer, setPauseTimer] = useState(null);
+  const [accumulatedTranscript, setAccumulatedTranscript] = useState("");
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
     if (SpeechRecognition && isSupported) {
       recognitionRef.current = new SpeechRecognition();
+      
+      // Enhanced configuration for better accuracy and pause handling
       recognitionRef.current.continuous = true; // Keep listening after pauses
       recognitionRef.current.interimResults = true; // Enable interim results
-      recognitionRef.current.lang = language; // Use Indian English for better accent support
-
+      recognitionRef.current.lang = language; // Use specified language for better accent support
+      
+             // Additional settings for improved accuracy
+       recognitionRef.current.maxAlternatives = 5; // Get more alternatives for better accuracy
+       // Note: grammars property is not supported in all browsers, so we skip it
+      
+      // Enhanced pause handling - extend timeout for Indian English speakers
+      if (recognitionRef.current.continuous !== undefined) {
+        recognitionRef.current.continuous = true;
+      }
+      
+      // Set longer timeout for pause handling (default is usually 10 seconds)
+      // This helps with Indian English speakers who may pause while thinking
+      if (recognitionRef.current.timeout !== undefined) {
+        recognitionRef.current.timeout = 15000; // 15 seconds timeout
+      }
+      
+      // Enhanced result handling with confidence scoring
       recognitionRef.current.onresult = (event) => {
-        let transcript = '';
+        let finalTranscript = '';
+        let interimTranscript = '';
+        let highestConfidence = 0;
+        let alternatives = [];
+
         for (let i = event.resultIndex; i < event.results.length; ++i) {
-          transcript += event.results[i][0].transcript;
+          const result = event.results[i];
+          const transcript = result[0].transcript;
+          const confidence = result[0].confidence || 0;
+          
+          if (result.isFinal) {
+            finalTranscript += transcript;
+            highestConfidence = Math.max(highestConfidence, confidence);
+            
+            // Collect alternatives for better suggestions
+            if (result.length > 1) {
+              for (let j = 1; j < Math.min(result.length, 3); j++) {
+                alternatives.push({
+                  text: result[j].transcript,
+                  confidence: result[j].confidence || 0
+                });
+              }
+            }
+          } else {
+            interimTranscript += transcript;
+          }
         }
-        setInterimTranscript(transcript);
-        if (event.results[event.results.length - 1].isFinal) {
-          onTranscript(transcript.trim());
-          setIsListening(false);
-          setInterimTranscript("");
+
+        setInterimTranscript(interimTranscript);
+        setConfidence(highestConfidence);
+        setSuggestions(alternatives);
+
+                if (finalTranscript) {
+          // Accumulate transcript to handle pauses - DON'T process immediately
+          const newAccumulated = accumulatedTranscript + (accumulatedTranscript ? ' ' : '') + finalTranscript;
+          setAccumulatedTranscript(newAccumulated);
+          
+          // Clear pause timer and set a new one
+          if (pauseTimer) {
+            clearTimeout(pauseTimer);
+          }
+          
+          // Only process after a longer pause to allow for multiple speech segments
+          const newPauseTimer = setTimeout(() => {
+            // After 15 seconds of pause, process the accumulated transcript
+            // This allows for multiple pauses while still processing eventually
+            if (newAccumulated.trim()) {
+              const processedTranscript = postProcessTranscript(newAccumulated);
+              onTranscript(processedTranscript.trim());
+              setIsListening(false);
+              setInterimTranscript("");
+              setConfidence(0);
+              setSuggestions([]);
+              setAccumulatedTranscript("");
+            }
+          }, 15000); // 15 second pause tolerance for multiple thinking pauses
+          
+          setPauseTimer(newPauseTimer);
         }
       };
+
+      // Enhanced error handling with user guidance
       recognitionRef.current.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
+        let errorMessage = '';
+        
+        switch (event.error) {
+          case 'no-speech':
+            errorMessage = 'No speech detected. Please speak clearly.';
+            break;
+          case 'audio-capture':
+            errorMessage = 'Microphone not accessible. Please check permissions.';
+            break;
+          case 'not-allowed':
+            errorMessage = 'Microphone access denied. Please allow microphone access.';
+            break;
+          case 'network':
+            errorMessage = 'Network error. Please check your connection.';
+            break;
+          case 'service-not-allowed':
+            errorMessage = 'Speech recognition service not available.';
+            break;
+          default:
+            errorMessage = 'Speech recognition error. Please try again.';
+        }
+        
+        // Show error message to user
+        if (window.showVoiceError) {
+          window.showVoiceError(errorMessage);
+        }
+        
         setIsListening(false);
         setInterimTranscript("");
+        setConfidence(0);
+        setSuggestions([]);
       };
+
       recognitionRef.current.onend = () => {
+        // If we have accumulated transcript, process it
+        if (accumulatedTranscript.trim()) {
+          const processedTranscript = postProcessTranscript(accumulatedTranscript);
+          onTranscript(processedTranscript.trim());
+        }
+        
         setIsListening(false);
         setInterimTranscript("");
+        setConfidence(0);
+        setSuggestions([]);
+        setAccumulatedTranscript("");
+        
+        // Clear pause timer
+        if (pauseTimer) {
+          clearTimeout(pauseTimer);
+          setPauseTimer(null);
+        }
+      };
+
+      // Add speech start/end detection
+      recognitionRef.current.onspeechstart = () => {
+        console.log('Speech started');
+      };
+
+      recognitionRef.current.onspeechend = () => {
+        console.log('Speech ended');
       };
     }
   }, [onTranscript, setIsListening, isSupported, language]);
+
+  // Post-process transcript for better accuracy with Indian English accent support
+  const postProcessTranscript = (transcript) => {
+    let processed = transcript;
+    
+    // Enhanced corrections for Indian English accents and common misrecognitions
+    const corrections = {
+      // Common Indian English accent corrections
+      'minor': 'minor',
+      'miner': 'minor',
+      'myner': 'minor',
+      'meener': 'minor',
+      'minar': 'minor',
+      
+      // Temperature variations
+      'temperature': 'temperature',
+      'temperatures': 'temperature',
+      'temp': 'temperature',
+      'temprature': 'temperature',
+      'tempratures': 'temperature',
+      'tempature': 'temperature',
+      'tempatures': 'temperature',
+      
+      // Thermostat variations
+      'thermostat': 'thermostat',
+      'thermostats': 'thermostat',
+      'thermostate': 'thermostat',
+      'thermostates': 'thermostat',
+      'thermo': 'thermostat',
+      
+      // Alarm variations
+      'alarm': 'alarm',
+      'alarms': 'alarm',
+      'alerm': 'alarm',
+      'alerms': 'alarm',
+      'alert': 'alarm',
+      'alerts': 'alarm',
+      
+      // Energy variations
+      'energy': 'energy',
+      'energies': 'energy',
+      'energie': 'energy',
+      'power': 'energy',
+      'electricity': 'energy',
+      
+      // Consumption variations
+      'consumption': 'consumption',
+      'consumptions': 'consumption',
+      'consume': 'consumption',
+      'usage': 'consumption',
+      'use': 'consumption',
+      
+      // Floor variations
+      'floor': 'floor',
+      'floors': 'floor',
+      'flor': 'floor',
+      'flors': 'floor',
+      'level': 'floor',
+      'levels': 'floor',
+      
+      // Room variations
+      'room': 'room',
+      'rooms': 'room',
+      'rum': 'room',
+      'rums': 'room',
+      'chamber': 'room',
+      'chambers': 'room',
+      
+      // Number variations (Indian English)
+      'second': '2nd',
+      'third': '3rd',
+      'fourth': '4th',
+      'fifth': '5th',
+      'first': '1st',
+      'to': '2nd',
+      'tree': '3rd',
+      'for': '4th',
+      'fifth': '5th',
+      
+      // Time expressions
+      'right now': 'right now',
+      'rightnow': 'right now',
+      'right-now': 'right now',
+      'at present': 'at present',
+      'atpresent': 'at present',
+      'at-present': 'at present',
+      'currently': 'currently',
+      'now': 'now',
+      'today': 'today',
+      'past': 'past',
+      'history': 'history',
+      'previous': 'previous',
+      'yesterday': 'yesterday',
+      'last week': 'last week',
+      'last month': 'last month',
+      
+      // Severity variations
+      'highest': 'highest',
+      'highest severity': 'highest severity',
+      'highest-severity': 'highest severity',
+      'critical': 'critical',
+      'criticle': 'critical',
+      'major': 'major',
+      'warning': 'warning',
+      'warn': 'warning',
+      'info': 'info',
+      'information': 'info',
+      
+      // Action words
+      'show': 'show',
+      'display': 'display',
+      'get': 'get',
+      'fetch': 'fetch',
+      'check': 'check',
+      'tell': 'tell',
+      'give': 'give',
+      
+      // Question words (Indian English variations)
+      'what is': 'what is',
+      'whats': 'what is',
+      'what\'s': 'what is',
+      'what-is': 'what is',
+      'how is': 'how is',
+      'how\'s': 'how is',
+      'how-is': 'how is',
+      'tell me': 'tell me',
+      'tell-me': 'tell me',
+      'give me': 'give me',
+      'give-me': 'give me',
+      
+             // Common Indian English filler words (remove these)
+       'actually': '',
+       'basically': '',
+       'you know': '',
+       'you-know': '',
+       'like': '',
+       'so': '',
+       'okay': '',
+       'ok': '',
+       'right': '',
+       'well': '',
+       
+       // Common thinking/speaking filler words (remove these)
+       'hmm': '',
+       'hmmm': '',
+       'um': '',
+       'uh': '',
+       'ah': '',
+       'aaaah': '',
+       'aaaa': '',
+       'err': '',
+       'er': '',
+       'erm': '',
+       'uhm': '',
+       'uhmm': '',
+       'huh': '',
+       'oh': '',
+       'wow': '',
+       'yeah': '',
+       'yep': '',
+       'nope': '',
+       'no': '',
+       'yes': '',
+       'sure': '',
+       'okay': '',
+       'alright': '',
+       'right': '',
+       'well': '',
+       'so': '',
+       'like': '',
+       'you know': '',
+       'i mean': '',
+       'i think': '',
+       'i guess': '',
+       'sort of': '',
+       'kind of': '',
+       'you see': '',
+       'let me see': '',
+       'let me think': '',
+      
+      // Device control variations
+      'increase': 'increase',
+      'decrease': 'decrease',
+      'set': 'set',
+      'change': 'set',
+      'adjust': 'set',
+      'turn': 'turn',
+      'switch': 'turn',
+      'on': 'on',
+      'off': 'off',
+      'up': 'up',
+      'down': 'down',
+      'high': 'high',
+      'low': 'low',
+      'medium': 'medium',
+      'maximum': 'high',
+      'minimum': 'low',
+      
+      // Degree variations
+      'degree': 'degree',
+      'degrees': 'degree',
+      'deg': 'degree',
+      'celsius': 'degree',
+      'centigrade': 'degree'
+    };
+
+    // Apply corrections
+    Object.entries(corrections).forEach(([incorrect, correct]) => {
+      const regex = new RegExp(`\\b${incorrect}\\b`, 'gi');
+      processed = processed.replace(regex, correct);
+    });
+
+    // Fix common punctuation issues
+    processed = processed.replace(/\s+/g, ' '); // Remove extra spaces
+    processed = processed.replace(/\s+([,.!?])/g, '$1'); // Fix spacing around punctuation
+    
+    // Remove multiple spaces and clean up
+    processed = processed.trim();
+    
+    // Additional filler word removal using regex patterns
+    const fillerPatterns = [
+      /\b(?:hmm+|um+|uh+|ah+|err+|er+|erm+|uhm+|uhmm+|huh+|oh+|wow+)\b/gi,
+      /\b(?:yeah|yep|nope|sure|alright|i mean|i think|i guess|sort of|kind of|you see|let me see|let me think)\b/gi,
+      /\b(?:actually|basically|you know|like|so|okay|ok|right|well)\b/gi
+    ];
+    
+    fillerPatterns.forEach(pattern => {
+      processed = processed.replace(pattern, '');
+    });
+    
+    // Clean up any remaining extra spaces after filler removal
+    processed = processed.replace(/\s+/g, ' ').trim();
+    
+    // Log the correction for debugging
+    if (processed !== transcript) {
+      console.log(`Voice correction: "${transcript}" → "${processed}"`);
+    }
+    
+    return processed;
+  };
 
   const startListening = () => {
     if (recognitionRef.current && isSupported) {
@@ -46,6 +413,15 @@ function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupport
         recognitionRef.current.start();
         setIsListening(true);
         setInterimTranscript("");
+        setConfidence(0);
+        setSuggestions([]);
+        setAccumulatedTranscript("");
+        
+        // Clear any existing pause timer
+        if (pauseTimer) {
+          clearTimeout(pauseTimer);
+          setPauseTimer(null);
+        }
       } catch (error) {
         console.error('Failed to start speech recognition:', error);
         setIsListening(false);
@@ -56,8 +432,24 @@ function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupport
   const stopListening = () => {
     if (recognitionRef.current && isListening) {
       recognitionRef.current.stop();
+      
+      // Process any accumulated transcript immediately
+      if (accumulatedTranscript.trim()) {
+        const processedTranscript = postProcessTranscript(accumulatedTranscript);
+        onTranscript(processedTranscript.trim());
+      }
+      
       setIsListening(false);
       setInterimTranscript("");
+      setConfidence(0);
+      setSuggestions([]);
+      setAccumulatedTranscript("");
+      
+      // Clear pause timer
+      if (pauseTimer) {
+        clearTimeout(pauseTimer);
+        setPauseTimer(null);
+      }
     }
   };
 
@@ -87,9 +479,34 @@ function VoiceRecognition({ onTranscript, isListening, setIsListening, isSupport
           </svg>
         )}
       </button>
-      {isListening && interimTranscript && (
-        <div className="mt-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded shadow">
-          {interimTranscript}
+      
+      {/* Voice input status and guidance */}
+      {isListening && (
+        <div className="mt-2 text-center">
+          <div className="text-xs sm:text-sm text-red-600 animate-pulse mb-1">
+            🎤 Listening... Speak clearly
+          </div>
+          {confidence > 0 && (
+            <div className="text-xs text-gray-500">
+              Confidence: {Math.round(confidence * 100)}%
+            </div>
+          )}
+                     {interimTranscript && (
+             <div className="mt-1 text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded shadow max-w-xs">
+               {interimTranscript}
+             </div>
+           )}
+           {accumulatedTranscript && (
+             <div className="mt-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded shadow max-w-xs border border-green-200">
+               <div className="font-semibold">Accumulated:</div>
+               {accumulatedTranscript}
+             </div>
+           )}
+          {suggestions.length > 0 && (
+            <div className="mt-1 text-xs text-blue-600">
+              Alternatives: {suggestions.map(s => s.text).join(', ')}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -111,6 +528,7 @@ export default function VoiceChat() {
   const [isListening, setIsListening] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [language, setLanguage] = useState('en-IN'); // Add language state
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
 
   // Check browser compatibility for speech recognition
   useEffect(() => {
@@ -136,17 +554,17 @@ export default function VoiceChat() {
     }
   }, []);
 
+  // Define baseURL for API calls
+  const baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:8000' 
+    : '';
+
   // Check API status on mount
   useEffect(() => {
     async function checkApiStatus() {
       try {
         const jwt = localStorage.getItem("jwt");
-        // Use localhost for local development, relative URL for production
-      const baseURL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-        ? 'http://localhost:8000' 
-        : '';
-      
-      const res = await axios.get(`${baseURL}/health`, {
+        const res = await axios.get(`${baseURL}/health`, {
           headers: { Authorization: "Bearer " + jwt }
         });
         setApiStatus("connected");
@@ -156,7 +574,7 @@ export default function VoiceChat() {
       }
     }
     checkApiStatus();
-  }, []);
+  }, [baseURL]);
 
   // Fetch device list on mount
   useEffect(() => {
@@ -475,13 +893,24 @@ export default function VoiceChat() {
                 disabled={loading}
                 aria-label="Chat input"
               />
-              <VoiceRecognition
-                onTranscript={(transcript) => setQuery(transcript)}
-                isListening={isListening}
-                setIsListening={setIsListening}
-                isSupported={isSupported}
-                language={language} // Pass language prop
-              />
+              <div className="flex flex-col items-center gap-1">
+                <VoiceRecognition
+                  onTranscript={(transcript) => setQuery(transcript)}
+                  isListening={isListening}
+                  setIsListening={setIsListening}
+                  isSupported={isSupported}
+                  language={language} // Pass language prop
+                />
+                {isSupported && (
+                  <button
+                    onClick={() => setShowVoiceSettings(!showVoiceSettings)}
+                    className="text-xs text-gray-500 hover:text-gray-700 transition"
+                    title="Voice settings"
+                  >
+                    ⚙️
+                  </button>
+                )}
+              </div>
               <button
                 onClick={handleSend}
                 className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded shadow hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 sm:gap-2"
@@ -515,18 +944,34 @@ export default function VoiceChat() {
                 </button>
               )}
             </div>
-            {/* Voice input status */}
-            {isListening && (
-              <div className="mt-2 text-center text-xs sm:text-sm text-red-600 animate-pulse">
-                🎤 Listening... Speak now
-              </div>
-            )}
-            {/* Browser compatibility notice */}
-            {!isSupported && (
-              <div className="mt-2 text-center text-xs text-gray-500">
-                💡 Voice input not supported in this browser. Try Chrome, Edge, or Firefox.
-              </div>
-            )}
+                         {/* Voice settings only */}
+             {!isListening && isSupported && showVoiceSettings && (
+               <div className="mt-2 text-center">
+                 <div className="mt-3 p-2 bg-gray-50 rounded border">
+                   <div className="text-xs font-semibold text-gray-700 mb-2">Voice Settings:</div>
+                   <div className="flex items-center gap-2 text-xs">
+                     <label htmlFor="voice-language" className="text-gray-600">Language:</label>
+                     <select
+                       id="voice-language"
+                       value={language}
+                       onChange={(e) => setLanguage(e.target.value)}
+                       className="border rounded px-1 py-0.5 text-xs"
+                     >
+                       <option value="en-IN">English (India)</option>
+                       <option value="en-US">English (US)</option>
+                       <option value="en-GB">English (UK)</option>
+                       <option value="hi-IN">Hindi (India)</option>
+                     </select>
+                   </div>
+                   <div className="text-xs text-gray-500 mt-1">
+                     Current: {language === 'en-IN' ? 'English (India)' : 
+                              language === 'en-US' ? 'English (US)' : 
+                              language === 'en-GB' ? 'English (UK)' : 
+                              language === 'hi-IN' ? 'Hindi (India)' : language}
+                   </div>
+                 </div>
+               </div>
+             )}
           </div>
         </div>
       </main>
